@@ -23,7 +23,7 @@ class GameScene: SKScene {
 	var playedCount = 0 {
 		didSet {
 			let remaining = max(0, 10 - playedCount)
-			cardCountLabel.text = "\(remaining)/100"
+			cardCountLabel.text = "\(remaining)/10" // sisa kartu yg belum dikeluarkan
 		}
 	}
 	
@@ -49,6 +49,12 @@ class GameScene: SKScene {
 	}
 	
 	func setupUI() {
+		// tampilan deck kartu
+		let deckImage = SKSpriteNode(imageNamed: "card_earth")
+		deckImage.size = CGSize(width: 80, height: 120)
+				deckImage.position = CGPoint(x: size.width - 100, y: 100)
+				addChild(deckImage)
+		
 		// HP Bar
 		hpBar.anchorPoint = CGPoint(x: 0.0, y: 0.5)
 		hpBar.position = CGPoint(x: size.width/2 - 100, y: size.height - 50)
@@ -63,7 +69,7 @@ class GameScene: SKScene {
 		
 		// Card Count Label
 		cardCountLabel.fontSize = 18
-		cardCountLabel.position = CGPoint(x: size.width - 60, y: 50)
+		cardCountLabel.position = CGPoint(x: size.width - 100, y: 160)
 		cardCountLabel.text = "10/10"
 		addChild(cardCountLabel)
 		
