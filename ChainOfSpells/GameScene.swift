@@ -86,7 +86,7 @@ class GameScene: SKScene {
 		addChild(hpBarBackground)
 		
 		hpLabel.fontSize = 20
-		hpLabel.position = CGPoint(x: size.width / 2, y: size.height - 70)
+		hpLabel.position = CGPoint(x: size.width / 2 + 128, y: size.height - 60)
 		hpLabel.text = "\(enemyHP)/10"
 		addChild(hpLabel)
 		
