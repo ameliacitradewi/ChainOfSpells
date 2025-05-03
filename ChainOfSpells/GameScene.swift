@@ -6,7 +6,7 @@
 //
 
 import SpriteKit
-
+// test untuk merge branch
 class GameScene: SKScene {
 	enum Element: String, CaseIterable {
 		case fire, water, earth, air
