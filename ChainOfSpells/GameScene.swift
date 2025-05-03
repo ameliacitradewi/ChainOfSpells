@@ -157,14 +157,21 @@ class GameScene: SKScene {
 	
 	func performAttack(with card: SKSpriteNode) {
 		guard let power = card.userData?["power"] as? Int else { return }
+		guard let index = handCards.firstIndex(of: card) else { return }
+			
 		card.run(SKAction.move(to: CGPoint(x: size.width / 2, y: size.height / 2), duration: 0.3)) {
 			card.removeFromParent()
+			
+			self.enemyHP = max(0, self.enemyHP - power)
+			self.handCards.remove(at: index)
+			
+			// Tambahkan kartu pengganti jika masih bisa draw
+			if self.playedCount < 10, !self.deck.isEmpty {
+				self.drawCard(at: index)
+			}
+			
+			self.cleanupAfterAction()
 		}
-		enemyHP = max(0, enemyHP - power)
-		if let index = handCards.firstIndex(of: card) {
-			handCards.remove(at: index)
-		}
-		cleanupAfterAction()
 	}
 	
 	func discard(card: SKSpriteNode) {
