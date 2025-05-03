@@ -6,8 +6,9 @@
 //
 
 import SpriteKit
-// test untuk merge branch
+
 class GameScene: SKScene {
+	// MARK: enum untuk pilihan elemen di deck kartu
 	enum Element: String, CaseIterable {
 		case fire, water, earth, air
 	}
@@ -17,13 +18,15 @@ class GameScene: SKScene {
 		let power: Int
 	}
 	
-	var selectedElement: Element = .fire
+	var selectedElement: Element = .fire // ini akan diganti jika dengan userinput
 	var deck: [CardData] = []
 	var handCards: [SKSpriteNode] = []
+	
+	// MARK: tampilan sisa kartu yang belum dikeluarkan
 	var playedCount = 0 {
 		didSet {
 			let remaining = max(0, 10 - playedCount)
-			cardCountLabel.text = "\(remaining)/10" // sisa kartu yg belum dikeluarkan
+			cardCountLabel.text = "\(remaining)/10"
 		}
 	}
 	
@@ -31,15 +34,28 @@ class GameScene: SKScene {
 	var selectedCard: SKSpriteNode?
 	var attackButton: SKLabelNode!
 	var discardButton: SKLabelNode!
-	var enemyHP = 100 {
+	var enemyHP = 10 {
 		didSet {
-			hpLabel.text = "\(enemyHP)/100"
-			hpBar.xScale = CGFloat(enemyHP) / 100.0
+			hpLabel.text = "\(enemyHP)/10"
+			//			hpBar.xScale = CGFloat(enemyHP) / 100.0
+			// MARK: ganti hp bar wizard agar berkurang dan berubah warna sesuai health
+			let ratio = CGFloat(enemyHP) / 10.0
+			hpBar.xScale = ratio
+			
+			if ratio <= 0.3 {
+				hpBar.color = .red
+			} else if ratio <= 0.6 {
+				hpBar.color = .yellow
+			} else {
+				hpBar.color = .green
+			}
 		}
 	}
 	let hpLabel = SKLabelNode(fontNamed: "Avenir")
 	let hpBar = SKSpriteNode(color: .green, size: CGSize(width: 200, height: 10))
-	let hpBarBackground = SKSpriteNode(color: .red, size: CGSize(width: 200, height: 10))
+	//	let hpBarBackground = SKSpriteNode(color: .red, size: CGSize(width: 200, height: 10))
+	let hpBarBackground = SKShapeNode(rectOf: CGSize(width: 200, height: 10))
+	
 	
 	override func didMove(to view: SKView) {
 		backgroundColor = .black
@@ -49,22 +65,29 @@ class GameScene: SKScene {
 	}
 	
 	func setupUI() {
-		// tampilan deck kartu
+		// MARK: tampilan spells card
 		let deckImage = SKSpriteNode(imageNamed: "card_earth")
 		deckImage.size = CGSize(width: 80, height: 120)
-				deckImage.position = CGPoint(x: size.width - 100, y: 100)
-				addChild(deckImage)
+		deckImage.position = CGPoint(x: size.width - 100, y: 100)
+		addChild(deckImage)
 		
-		// HP Bar
+		// MARK: Wizard's HP Bar
 		hpBar.anchorPoint = CGPoint(x: 0.0, y: 0.5)
 		hpBar.position = CGPoint(x: size.width/2 - 100, y: size.height - 50)
-		hpBarBackground.position = hpBar.position
-		addChild(hpBarBackground)
+		//		hpBarBackground.position = hpBar.position
+		//		addChild(hpBarBackground)
 		addChild(hpBar)
+		
+		// HP Bar background (frame putih)
+		hpBarBackground.strokeColor = .white     // garis luar
+		hpBarBackground.lineWidth = 2
+		hpBarBackground.fillColor = .clear       // tanpa isi
+		hpBarBackground.position = CGPoint(x: size.width / 2, y: size.height - 50)
+		addChild(hpBarBackground)
 		
 		hpLabel.fontSize = 20
 		hpLabel.position = CGPoint(x: size.width / 2, y: size.height - 70)
-		hpLabel.text = "\(enemyHP)/100"
+		hpLabel.text = "\(enemyHP)/10"
 		addChild(hpLabel)
 		
 		// Card Count Label
@@ -91,6 +114,7 @@ class GameScene: SKScene {
 		addChild(discardButton)
 	}
 	
+	// MARK: nominal attack untuk kartu
 	func generateDeck(for element: Element) {
 		let uniquePowers = Array(1...10).shuffled()
 		for power in uniquePowers {
@@ -158,7 +182,7 @@ class GameScene: SKScene {
 	func performAttack(with card: SKSpriteNode) {
 		guard let power = card.userData?["power"] as? Int else { return }
 		guard let index = handCards.firstIndex(of: card) else { return }
-			
+		
 		card.run(SKAction.move(to: CGPoint(x: size.width / 2, y: size.height / 2), duration: 0.3)) {
 			card.removeFromParent()
 			
