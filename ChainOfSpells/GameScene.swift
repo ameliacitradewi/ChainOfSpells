@@ -91,7 +91,7 @@ class GameScene: SKScene {
 		addChild(hpLabel)
 		
 		// Card Count Label
-		cardCountLabel.fontSize = 18
+		cardCountLabel.fontSize = 15
 		cardCountLabel.position = CGPoint(x: size.width - 100, y: 160)
 		cardCountLabel.text = "10/10"
 		addChild(cardCountLabel)
@@ -99,16 +99,16 @@ class GameScene: SKScene {
 		// Action Buttons
 		attackButton = SKLabelNode(text: "Attack")
 		attackButton.fontName = "Avenir"
-		attackButton.fontSize = 24
-		attackButton.position = CGPoint(x: size.width / 2 - 60, y: 180)
+		attackButton.fontSize = 18
+		attackButton.position = CGPoint(x: size.width / 2 - 40, y: 200)
 		attackButton.name = "attackButton"
 		attackButton.isHidden = true
 		addChild(attackButton)
 		
 		discardButton = SKLabelNode(text: "Discard")
 		discardButton.fontName = "Avenir"
-		discardButton.fontSize = 24
-		discardButton.position = CGPoint(x: size.width / 2 + 60, y: 180)
+		discardButton.fontSize = 18
+		discardButton.position = CGPoint(x: size.width / 2 + 40, y: 200)
 		discardButton.name = "discardButton"
 		discardButton.isHidden = true
 		addChild(discardButton)
@@ -139,14 +139,21 @@ class GameScene: SKScene {
 		cardNode.userData = ["power": card.power, "originalY": 100.0]
 		
 		let label = SKLabelNode(text: "\(card.power)")
-		label.fontSize = 16
+		label.fontSize = 15
 		label.fontName = "Avenir"
-		label.position = CGPoint(x: -40, y: 40)
+//		label.position = CGPoint(x: -40, y: 40)
+		
+		// Atur posisi ke pojok kiri atas relatif terhadap ukuran kartu
+		let offsetX = -cardNode.size.width / 2 + 14  // 6 poin margin dari kiri
+		let offsetY = cardNode.size.height / 2 - 23  // 6 poin margin dari atas
+		label.position = CGPoint(x: offsetX, y: offsetY)
+		
 		label.zPosition = 2
 		cardNode.addChild(label)
 		
 		handCards.insert(cardNode, at: index)
 		addChild(cardNode)
+		
 	}
 	
 	override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
