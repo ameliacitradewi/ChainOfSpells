@@ -6,11 +6,16 @@
 //
 
 
+/// Enum
+// MARK: enum untuk pilihan elemen di deck kartu
+enum Element: String, CaseIterable, Codable {
+    case fire, water, earth, wind
+}
 /// String
 var fontName : String = "Arial Bold"
 
-var stage : [StageModel] =  [
-    StageModel(id: 1,enemy: EnemyModel( name: "Monster", hp: 100))
+var stages : [StageModel] =  [
+    StageModel(id: 1,enemy: EnemyModel( name: "enemy_1", hp: 10),background: "background_1")
 ]
 
 

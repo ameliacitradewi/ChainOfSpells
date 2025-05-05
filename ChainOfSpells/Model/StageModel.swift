@@ -8,4 +8,5 @@
 struct StageModel{
     var id : Int
     var enemy : EnemyModel
+    var background : String
 }

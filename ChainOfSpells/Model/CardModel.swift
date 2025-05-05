@@ -6,10 +6,7 @@
 //
 
 
-// MARK: enum untuk pilihan elemen di deck kartu
-enum Element: String, CaseIterable {
-    case fire, water, earth, wind
-}
+
 
 struct CardModel {
     let element: Element
