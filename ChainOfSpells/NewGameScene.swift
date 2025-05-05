@@ -23,15 +23,15 @@ class NewGameScene: SKScene {
     private let discardButton = SKSpriteNode(imageNamed: "discard_button")
     private var playAreaCards = [CardNode]()
     private var selectedCards = [CardNode]()
-    private let maxSelection = 4
-    private let cardInHand = 6
+    private let maxSelection = 1
+    private let cardInHand = 3
     private let playAreaPadding: CGFloat = 4
     private var playAreaPosition: CGPoint { CGPoint(x: frame.midX, y: frame.midY - 100) }
 
     // MARK: Boss Properties
     private var bossSprite = SKSpriteNode(imageNamed: "boss")
-    private var bossHealth: Int = 100
-    private let bossMaxHealth: Int = 100
+    private var bossHealth: Int = 10
+    private let bossMaxHealth: Int = 10
     private var bossHealthBar = SKNode()
     private var bossHealthLabel = SKLabelNode()
 
@@ -81,7 +81,7 @@ class NewGameScene: SKScene {
     }
 
     private func updateDeckCount() {
-        deckCountLabel.text = "\(currentDeck.count)/40"
+        deckCountLabel.text = "\(currentDeck.count)/\(deck.count)"
     }
 
     private func setupDeckNode() {
