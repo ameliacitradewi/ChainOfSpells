@@ -142,39 +142,88 @@ class NewGameScene: SKScene {
             discardButton.colorBlendFactor = 0
         }
     }
-
-
-    // MARK: - Boss Setup
+    
+    // MARK: – Boss Setup (using centerRect for slicing)
     private func setupBoss() {
-        // Setup from stage info
+        // 1) Usual boss sprite
         bossSprite = SKSpriteNode(imageNamed: stageInfo?.enemy.name ?? "")
-        bossHealth = stageInfo?.enemy.hp ?? 0
+        bossHealth    = stageInfo?.enemy.hp ?? 0
         bossMaxHealth = stageInfo?.enemy.hp ?? 0
         bossSprite.position = CGPoint(x: frame.midX, y: frame.height - 170)
         bossSprite.zPosition = -3
         bossSprite.scale(to: frame.size, width: false, multiplier: 0.6)
         addChild(bossSprite)
+        startBossIdleAnimation()
 
-        let barWidth: CGFloat = 150, barHeight: CGFloat = 10
-        let backgroundBar = SKSpriteNode(color: .red, size: CGSize(width: barWidth, height: barHeight))
-        backgroundBar.position = CGPoint(x: 0, y: 120)
-
-        let healthBar = SKSpriteNode(color: .green, size: CGSize(width: barWidth, height: barHeight))
-        healthBar.anchorPoint = CGPoint(x: 0, y: 0.5)
-        healthBar.position = CGPoint(x: -barWidth/2, y: 120)
-        healthBar.name = "healthBar"
-
-        bossHealthBar.addChild(backgroundBar)
-        bossHealthBar.addChild(healthBar)
+        // 2) Bar container
+        bossHealthBar = SKNode()
         bossHealthBar.position = bossSprite.position
         addChild(bossHealthBar)
 
-        bossHealthLabel.text = "\(bossHealth)/\(bossMaxHealth)"
-        bossHealthLabel.fontSize = 24
-        bossHealthLabel.fontColor = .white
-        bossHealthLabel.position = CGPoint(x: 0, y: 90)
+        // 3) Create the HP‑bar using slicing:
+        let fullBarWidth: CGFloat = 200
+        let barHeight:    CGFloat = 30
+        let hpYPosition: CGFloat = 140
+
+        let hpBar = SKSpriteNode(imageNamed: "hp-bar")
+        hpBar.name = "healthBar"
+
+        // → anchor at left so size changes grow/shrink to the right
+        hpBar.anchorPoint = CGPoint(x: 0, y: 0.5)
+
+        // → tell SpriteKit which portion of the texture is *stretchable*:
+        //   if your end‑caps are, say, 16px wide in a 128px‑wide texture:
+        let tex = hpBar.texture!
+        let cap: CGFloat = 4 / tex.size().width   // 16px / textureWidth
+        hpBar.centerRect = CGRect(x:   cap,
+                                  y:   0,
+                                  width: 1 - 2*cap,
+                                  height: 1)
+
+        // 4) Set its starting size and position
+        hpBar.size = CGSize(width: fullBarWidth, height: barHeight)
+        hpBar.position = CGPoint(x: -fullBarWidth/2, y: hpYPosition)
+        bossHealthBar.addChild(hpBar)
+        
+        // 5) (Optional) If you have a separate background frame:
+        let hpBg = SKSpriteNode(imageNamed: "hpbackground")
+        hpBg.scale(to: CGSize(width: fullBarWidth, height: barHeight), width: true, multiplier: 1)
+        hpBg.position = CGPoint(x: 0, y: hpYPosition)
+        hpBg.zPosition = -1
+        bossHealthBar.addChild(hpBg)
+
+        // 5) (Optional) If you have a separate background frame:
+        let bg = SKSpriteNode(imageNamed: "hp-bar-background")
+        bg.scale(to: CGSize(width: fullBarWidth, height: barHeight), width: true, multiplier: 1)
+        bg.position = CGPoint(x: 0, y: hpYPosition)
+        bg.zPosition = 3
+        bossHealthBar.addChild(bg)
+
+        // 6) Health label
+        bossHealthLabel.text      = "\(bossHealth)/\(bossMaxHealth)"
+        bossHealthLabel.fontName = "Helvetica-Bold"
+        bossHealthLabel.fontSize  = 24
+        bossHealthLabel.fontColor = .black
+        bossHealthLabel.position  = CGPoint(x: 0, y: hpYPosition - 30)
         bossHealthBar.addChild(bossHealthLabel)
     }
+    
+    private func startBossIdleAnimation() {
+        var idleFrames: [SKTexture] = []
+        let idleAtlas = SKTextureAtlas(named: "BossIdle")
+
+        for i in 1...4 {
+            let textureName = "boss\(i)"
+            let texture = idleAtlas.textureNamed(textureName)
+            idleFrames.append(texture)
+        }
+
+        let idleAnimation = SKAction.animate(with: idleFrames, timePerFrame: 0.25, resize: false, restore: true)
+        let repeatIdle = SKAction.repeatForever(idleAnimation)
+        bossSprite.run(repeatIdle, withKey: "bossIdle")
+    }
+
+
 
     // MARK: - Labels Setup
     private func setupLabels() {
@@ -430,18 +479,50 @@ class NewGameScene: SKScene {
         gameOverLabel.run(.sequence([.unhide(), .scale(to: 1.2, duration: 0.5), .scale(to: 0.9, duration: 0.3), .scale(to: 1.0, duration: 0.2)]))
         isUserInteractionEnabled = false
     }
-
+    
+    // MARK: - Boss Shake Animation
+    private func createBossShakeAnimation() -> SKAction {
+        let shakeDistance: CGFloat = 15
+        let duration: TimeInterval = 0.05
+        
+        let shakeLeft = SKAction.moveBy(x: -shakeDistance, y: 0, duration: duration)
+        let shakeRight = SKAction.moveBy(x: shakeDistance * 2, y: 0, duration: duration)
+        let shakeLeft2 = SKAction.moveBy(x: -shakeDistance * 2, y: 0, duration: duration)
+        let shakeRight2 = SKAction.moveBy(x: shakeDistance * 2, y: 0, duration: duration)
+        let reset = SKAction.moveBy(x: -shakeDistance, y: 0, duration: duration)
+        
+        return SKAction.sequence([shakeLeft, shakeRight, shakeLeft2, shakeRight2, reset])
+    }
+    
+    // MARK: – Update Boss Health (using resize action)
     private func updateBossHealth(damage: Int) {
         bossHealth = max(0, bossHealth - damage)
-        if let healthBar = bossHealthBar.childNode(withName: "healthBar") as? SKSpriteNode {
-            let ratio = CGFloat(bossHealth) / CGFloat(bossMaxHealth)
-            healthBar.run(.scaleX(to: ratio, duration: 0.2))
+        let ratio = CGFloat(bossHealth) / CGFloat(bossMaxHealth)
+
+        // Find the sliced bar by name:
+        if let hpBar = bossHealthBar.childNode(withName: "healthBar") as? SKSpriteNode {
+            let fullBarWidth: CGFloat = 200
+            let newWidth = fullBarWidth * ratio
+
+            // Animate width change; corners stay intact
+            hpBar.run(.resize(toWidth: newWidth, duration: 0.2))
         }
+
         bossHealthLabel.text = "\(bossHealth)/\(bossMaxHealth)"
+        
+        // Trigger shake when damage is taken
+        if damage > 0 {
+            bossSprite.run(createBossShakeAnimation())
+        }
+        
         if bossHealth <= 0 { bossDefeated() }
     }
 
+
     private func bossDefeated() {
+        // Stop idle animation
+        bossSprite.removeAction(forKey: "bossIdle")
+        
         victoryLabel.text = "You Win!"
         victoryLabel.fontSize = 100
         victoryLabel.fontColor = .yellow
