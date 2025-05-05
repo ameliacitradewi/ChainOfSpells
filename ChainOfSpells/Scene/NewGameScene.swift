@@ -26,7 +26,7 @@ class NewGameScene: SKScene {
     private var selectedCards = [CardNode]()
 
     private let playAreaPadding: CGFloat = 4
-    private var playAreaPosition: CGPoint { CGPoint(x: frame.midX, y: frame.midY - 100) }
+    private var playAreaPosition: CGPoint { CGPoint(x: frame.midX, y: frame.midY - 130) }
 
     // MARK: Boss Properties
     private var bossSprite = SKSpriteNode(imageNamed: "boss")
@@ -99,7 +99,7 @@ class NewGameScene: SKScene {
 
     private func setupDeckNode() {
         deckNode = SKSpriteNode(texture: cardBackTexture)
-        deckNode.position = CGPoint(x: frame.midX + 350, y: frame.midY - 100)
+        deckNode.position = CGPoint(x: frame.midX + 350, y: frame.midY - 130)
         scaleCard(deckNode)
         addChild(deckNode)
 
@@ -111,7 +111,7 @@ class NewGameScene: SKScene {
 
     // MARK: - Buttons Setup
     private func setupButtons() {
-        let buttonY: CGFloat = frame.midY - 10
+        let buttonY: CGFloat = frame.midY - 40
         attackButton.name = "attack"
         discardButton.name = "discard"
 
@@ -241,6 +241,9 @@ class NewGameScene: SKScene {
         card.run(move) {
             card.isAnimating = false
             card.isSelected = true
+            
+            self.addGlow(to: card)
+            
             self.selectedCards.append(card)
             self.updateButtonVisibility()
             self.updateComboInfo()
@@ -254,6 +257,9 @@ class NewGameScene: SKScene {
         card.run(move) {
             card.isAnimating = false
             card.isSelected = false
+            
+            card.childNode(withName: "glow")?.removeFromParent()
+            
             self.selectedCards.removeAll { $0 == card }
             self.updateButtonVisibility()
             self.updateComboInfo()
@@ -276,33 +282,63 @@ class NewGameScene: SKScene {
         let cardWidth = deckNode.frame.width
         let totalWidth = (cardWidth * CGFloat(count)) + (playAreaPadding * CGFloat(count - 1))
         var x = playAreaPosition.x - (totalWidth / 2) + (cardWidth / 2)
-        var positions = [CGPoint]()
+        var finalPositions = [CGPoint]()
         for _ in 0..<count {
-            positions.append(CGPoint(x: x, y: playAreaPosition.y))
+            finalPositions.append(CGPoint(x: x, y: playAreaPosition.y))
             x += cardWidth + playAreaPadding
         }
+        
+        // Staging line below play area:
+        let stagingOffset: CGFloat = -55
+        let stagingPositions = finalPositions.map { CGPoint(x: $0.x, y: $0.y + stagingOffset) }
 
-        animateDrawing(at: positions, index: 0)
+        animateDrawing(from: stagingPositions, to: finalPositions, index: 0)
     }
 
-    private func animateDrawing(at positions: [CGPoint], index: Int) {
-        guard index < positions.count else { isAnimating = false; return }
+    private func animateDrawing(from stagingPositions: [CGPoint], to finalPositions: [CGPoint], index: Int) {
+        guard index < finalPositions.count else {
+            isAnimating = false
+            // add glow after all cards drawing
+            let moveDuration: TimeInterval = 0.6
+            run(.sequence([
+                .wait(forDuration: 0.1),
+                .run { [weak self] in
+                    guard let self = self else { return }
+                    for card in self.playAreaCards {
+                        let moveUp = SKAction.move(to: card.originalPosition,
+                                                   duration: moveDuration)
+                        moveUp.timingMode = .easeInEaseOut
+                        card.run(moveUp)
+                    }
+                },
+                .wait(forDuration: moveDuration + 0.05),
+                .run { [weak self] in
+                    guard let self = self else { return }
+                    self.playAreaCards.forEach { self.addTemporaryGlow(to: $0) }
+                }
+            ]))
+            ; return
+        }
         let def = currentDeck.removeFirst()
         updateDeckCount()
         let card = CardNode(texture: cardBackTexture)
         card.position = deckNode.position
-        card.originalPosition = positions[index]
+        card.originalPosition = finalPositions[index]
         card.attackValue = def.value
         card.element = def.element
         card.valueLabel.text = "\(def.value)"
         card.valueLabel.isHidden = true
         scaleCard(card)
-        addGlow(to: card)
+//        addGlow(to: card)
         addChild(card)
         playAreaCards.append(card)
 
-        animateCard(card, to: positions[index]) {
-            self.animateDrawing(at: positions, index: index + 1)
+        // Animate move/flip/pop, then recurse—no glow here any more
+        animateCard(card, to: stagingPositions[index]) { [weak self] in
+            guard let self = self else { return }
+            self.animateDrawing(from: stagingPositions,
+                                to: finalPositions,
+                                index: index + 1)
         }
     }
 
@@ -337,7 +373,6 @@ class NewGameScene: SKScene {
             card.valueLabel.text = "\(def.value)"
             card.valueLabel.isHidden = true
             scaleCard(card)
-            addGlow(to: card)
             addChild(card)
             playAreaCards.append(card)
 
@@ -508,6 +543,27 @@ class NewGameScene: SKScene {
         card.run(.group([move, flip])) {
             card.run(pop) { completion() }
         }
+    }
+    
+    // MARK: Temporary glow
+    private func addTemporaryGlow(to card: SKSpriteNode, duration: TimeInterval = 0.5) {
+        let size = CGSize(width: card.frame.width + 30, height: card.frame.height + 40)
+        let glow = SKShapeNode(rectOf: size, cornerRadius: 0)
+        glow.name = "tempGlow"
+        glow.strokeColor = UIColor(red: 0.82, green: 0.59, blue: 0.20, alpha: 1)
+        glow.lineWidth = 4
+        glow.glowWidth = 4
+        glow.alpha = 0
+        glow.zPosition = card.zPosition - 1
+        card.addChild(glow)
+
+        let action = SKAction.sequence([
+            .fadeAlpha(to: 1.0, duration: 0.2),
+            .wait(forDuration: duration),
+            .fadeAlpha(to: 0.0, duration: 0.2),
+            .removeFromParent()
+        ])
+        glow.run(action)
     }
     
     private func addGlow(to card: SKSpriteNode) {
