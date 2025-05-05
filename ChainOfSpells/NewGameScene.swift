@@ -16,7 +16,7 @@ class NewGameScene: SKScene {
     private var currentDeck: [CardModel] = []
     private let cardBackTexture = SKTexture(imageNamed: "card_back")
     private var deckNode: SKSpriteNode!
-    private let deckCountLabel = SKLabelNode(fontNamed: "Arial Bold")
+    private let deckCountLabel = SKLabelNode(fontNamed: fontName)
 
     // MARK: Buttons & Selection
     private let attackButton = SKSpriteNode(imageNamed: "attack_button")
@@ -36,13 +36,13 @@ class NewGameScene: SKScene {
     private var bossHealthLabel = SKLabelNode()
 
     // MARK: Labels & State
-    private let victoryLabel = SKLabelNode(fontNamed: "Arial Bold")
+    private let victoryLabel = SKLabelNode(fontNamed: fontName)
     private var attackChances = 4
-    private let chancesLabel = SKLabelNode(fontNamed: "Arial Bold")
+    private let chancesLabel = SKLabelNode(fontNamed: fontName)
     private var discardLeft = 3
-    private let discardLeftLabel = SKLabelNode(fontNamed: "Arial Bold")
-    private let comboInfoLabel = SKLabelNode(fontNamed: "Arial Bold")
-    private let gameOverLabel = SKLabelNode(fontNamed: "Arial Bold")
+    private let discardLeftLabel = SKLabelNode(fontNamed: fontName)
+    private let comboInfoLabel = SKLabelNode(fontNamed: fontName)
+    private let gameOverLabel = SKLabelNode(fontNamed: fontName)
     private var isAnimating = false
     
     // UI

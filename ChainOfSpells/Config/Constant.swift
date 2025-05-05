@@ -5,6 +5,10 @@
 //  Created by Mushafa Fadzan Andira on 05/05/25.
 //
 
+
+/// String
+var fontName : String = "Arial Bold"
+
 var stage : [StageModel] =  [
     StageModel(id: 1,enemy: EnemyModel( name: "Monster", hp: 100))
 ]
