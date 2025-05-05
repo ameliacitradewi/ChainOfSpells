@@ -8,10 +8,7 @@
 import SpriteKit
 
 class GameScene: SKScene {
-	// MARK: enum untuk pilihan elemen di deck kartu
-	enum Element: String, CaseIterable {
-		case fire, water, earth, air
-	}
+	
 	
 	struct CardData {
 		let element: Element
