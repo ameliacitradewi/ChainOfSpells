@@ -1,15 +1,15 @@
 //
-//  SelectElementScene.swift
+//  UnlockElementScene.swift
 //  ChainOfSpells
 //
-//  Created by Mushafa Fadzan Andira on 05/05/25.
+//  Created by Mushafa Fadzan Andira on 06/05/25.
 //
 
 import SpriteKit
 
 
 
-class SelectElementScene : SKScene {
+class UnlockElementScene : SKScene {
     // User selected element
     private var selectedElement : Element!
     
@@ -26,18 +26,10 @@ class SelectElementScene : SKScene {
 //    private var selectionHighlight : SKShapeNode!
 
 
-    
-    
     override func didMove(to view: SKView) {
         self.backgroundColor = UIColor(named: "CardGlow") ?? .red
-        resetProgression()
         setupCards()
         setupButtons()
-    }
-    
-    private func resetProgression() {
-        UserDefaults.standard.playerModel.currentStage = 0
-        UserDefaults.standard.playerModel.elements.removeAll()
     }
     
     // MARK: - Buttons Setup
@@ -76,15 +68,29 @@ class SelectElementScene : SKScene {
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
         let location = touch.location(in: self)
-        
+        let currentElements = UserDefaults.standard.playerModel.elements
         if fireCard.contains(location){
+            if(currentElements.contains(.fire)){
+                return
+            }
             selectedElement = .fire
         } else if waterCard.contains(location){
+            if(currentElements.contains(.water)){
+                return
+            }
             selectedElement = .water
         } else if windCard.contains(location){
+            if(currentElements.contains(.wind)){
+                return
+            }
             selectedElement = .wind
         } else if earthCard.contains(location){
+            if(currentElements.contains(.earth)){
+                return
+            }
             selectedElement = .earth
+        } else {
+            return
         }
 //        else if selectButton.contains(location){
 //            let gameScene = NewGameScene(size: self.view!.bounds.size)
@@ -93,37 +99,16 @@ class SelectElementScene : SKScene {
 //            // Tampilkan scene
 //            self.view!.presentScene(gameScene)
 //        }
-//        
+//
 //        if selectedElement == nil{
 //            return
 //        }
         
-        switch selectedElement {
-        case .none: do {
-            print("None Selected")
-            return
-        }
-        case .fire: do {
-            print("Fire Selected")
-        }
-        case .water: do {
-            print("Water Selected")
-
-        }
-        case .earth: do {
-            print("Earth Selected")
-
-        }
-        case .wind: do {
-            print("Wind Selected")
-        }
-
-        }
         // Set game scene info
         let gameScene = NewGameScene(size: self.view!.bounds.size)
-        gameScene.stageInfo = stages.first
+        gameScene.stageInfo = stages[UserDefaults.standard.playerModel.currentStage]
         gameScene.scaleMode = .aspectFill
-        UserDefaults.standard.playerModel.elements = [selectedElement]
+        UserDefaults.standard.playerModel.elements.append(selectedElement)
         // Tampilkan scene
         self.view!.presentScene(gameScene)
         
@@ -145,5 +130,3 @@ class SelectElementScene : SKScene {
 //        }
     }
 }
-
-

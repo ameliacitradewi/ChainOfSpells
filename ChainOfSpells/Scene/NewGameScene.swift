@@ -641,6 +641,13 @@ class NewGameScene: SKScene {
         addChild(victoryLabel)
         victoryLabel.run(.sequence([.unhide(), .scale(to: 1.2, duration: 0.5), .scale(to: 0.9, duration: 0.2), .scale(to: 1.0, duration: 0.2)]))
         isUserInteractionEnabled = false
+        // Delay the call to gotoNextLevel by 3 seconds
+           run(SKAction.sequence([
+               SKAction.wait(forDuration: 3.0),
+               SKAction.run { [weak self] in
+                   self?.gotoNextLevel()
+               }
+           ]))
     }
     
     // MARK: - Combo Info Update
@@ -704,6 +711,9 @@ class NewGameScene: SKScene {
             return ("Basic Spell", 1.0)
         }
     }
+    
+    
+    
 
 
     private func scaleCard(_ card: SKSpriteNode) {
@@ -846,6 +856,28 @@ class NewGameScene: SKScene {
             }
 
         ]))
+    }
+    
+    
+    
+    private func gotoNextLevel() {
+        UserDefaults.standard.playerModel.currentStage += 1
+        
+        // All element is not unlocked
+        if(UserDefaults.standard.playerModel.elements.count != Element.allCases.count){
+            let gameScene = UnlockElementScene(size: self.view!.bounds.size)
+            gameScene.scaleMode = .aspectFill
+            // Tampilkan scene
+            self.view!.presentScene(gameScene)
+            return
+        }
+     
+        // Set game scene info
+        let gameScene = NewGameScene(size: self.view!.bounds.size)
+        gameScene.stageInfo = stages[UserDefaults.standard.playerModel.currentStage]
+        gameScene.scaleMode = .aspectFill
+        // Tampilkan scene
+        self.view!.presentScene(gameScene)
     }
 
 }
