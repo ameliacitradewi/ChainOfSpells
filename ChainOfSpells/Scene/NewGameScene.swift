@@ -228,25 +228,25 @@ class NewGameScene: SKScene {
     // MARK: - Labels Setup
     private func setupLabels() {
         chancesLabel.text = "Attacks Left: \(attackChances)"
-        chancesLabel.fontSize = 30
+        chancesLabel.fontSize = 24
         chancesLabel.fontColor = .white
         chancesLabel.horizontalAlignmentMode = .left
-        chancesLabel.position = CGPoint(x: 50, y: frame.height - 100)
+        chancesLabel.position = CGPoint(x: 50, y: frame.height/2 - 130)
         addChild(chancesLabel)
         
         // Discard left label below chances
         discardLeftLabel.text = "Discards Left: \(discardLeft)"
-        discardLeftLabel.fontSize = 30
+        discardLeftLabel.fontSize = 24
         discardLeftLabel.fontColor = .white
         discardLeftLabel.horizontalAlignmentMode = .left
-        discardLeftLabel.position = CGPoint(x: 50, y: chancesLabel.position.y - 50)
+        discardLeftLabel.position = CGPoint(x: 50, y: chancesLabel.position.y - 30)
         addChild(discardLeftLabel)
         
         comboInfoLabel.text = ""
-        comboInfoLabel.fontSize = 24
+        comboInfoLabel.fontSize = 20
         comboInfoLabel.fontColor = .yellow
         comboInfoLabel.horizontalAlignmentMode = .left
-        comboInfoLabel.position = CGPoint(x: 50, y: discardLeftLabel.position.y - 40)
+		comboInfoLabel.position = CGPoint(x: 50, y: chancesLabel.position.y + 30)
         addChild(comboInfoLabel)
     }
 
