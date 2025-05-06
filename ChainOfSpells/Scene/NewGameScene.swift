@@ -218,9 +218,6 @@ class NewGameScene: SKScene {
         addChild(bossSprite)
         startBossIdleAnimation()
 
-    
-
-       
     }
     
     private func startBossIdleAnimation() {
@@ -454,10 +451,23 @@ class NewGameScene: SKScene {
     }
 
     // MARK: - Attack & Discard
+	private func shakeBackground(duration: TimeInterval = 0.6, amplitude: CGFloat = 15) {
+		let shakeLeft = SKAction.moveBy(x: -amplitude, y: 0, duration: 0.05)
+		let shakeRight = SKAction.moveBy(x: amplitude * 2, y: 0, duration: 0.05)
+		let shakeLeft2 = SKAction.moveBy(x: -amplitude * 2, y: 0, duration: 0.05)
+		let shakeRight2 = SKAction.moveBy(x: amplitude * 2, y: 0, duration: 0.05)
+		let reset = SKAction.moveBy(x: -amplitude, y: 0, duration: 0.05)
+
+		let shakeSequence = SKAction.sequence([shakeLeft, shakeRight, shakeLeft2, shakeRight2, reset])
+		background.run(shakeSequence)
+		bossSprite.run(shakeSequence)
+	}
+
+	
     private func handleAttack() {
         guard !selectedCards.isEmpty else { return }
-        attackChances -= 1
-        chancesLabel.text = "x\(attackChances)"
+//        attackChances -= 1
+//        chancesLabel.text = "x\(attackChances)"
 
         let base = selectedCards.reduce(0) { $0 + $1.attackValue }
         let (name, mult) = evaluateCombo(for: selectedCards)
@@ -468,6 +478,17 @@ class NewGameScene: SKScene {
         replaceSelectedCards()
         updateDeckCount()
         updateButtonVisibility()
+		
+		// Delay 3 detik lalu shake background
+		run(.sequence([
+			.wait(forDuration: 1.5),
+			.run { [weak self] in
+				guard let self = self else { return }
+				self.shakeBackground()
+				self.attackChances -= 1
+				self.chancesLabel.text = "x\(self.attackChances)"
+			}
+		]))
 
         if attackChances <= 0 && bossHealth > 0 { showGameOver() }
     }
