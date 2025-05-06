@@ -77,6 +77,8 @@ class NewGameScene: SKScene {
         addChild(cameraNode)
     }
     
+  
+    
     // MARK: UPDATE ON PLAYER PROGRESSION
     private func setGameRules() {
         maxSelection = UserDefaults.standard.playerModel.elements.count
@@ -214,7 +216,7 @@ class NewGameScene: SKScene {
     // MARK: – Boss Setup (using centerRect for slicing)
     private func setupBoss() {
         // 1) Usual boss sprite
-        bossSprite = SKSpriteNode(imageNamed: stageInfo?.enemy.name ?? "")
+        bossSprite = SKSpriteNode(imageNamed: stageInfo?.enemy.idleAnimations.first ?? "")
         bossHealth    = stageInfo?.enemy.hp ?? 0
         bossMaxHealth = stageInfo?.enemy.hp ?? 0
         bossSprite.position = CGPoint(x: frame.midX, y: frame.height - 150)
@@ -526,6 +528,7 @@ class NewGameScene: SKScene {
         cam.run(SKAction.sequence(actions))
 	}
 
+    
 	
     private func handleAttack() {
         guard !selectedCards.isEmpty else { return }
@@ -541,7 +544,6 @@ class NewGameScene: SKScene {
         
         animateHandTransitionAfterAttack()
 
-        if attackChances <= 0 && bossHealth > 0 { showGameOver() }
     }
 
     private func handleDiscard() {
@@ -826,9 +828,14 @@ class NewGameScene: SKScene {
                 self.shakeBackground(duration: shakeDur)
                 self.attackChances -= 1
                 self.chancesLabel.text = "x\(self.attackChances)"
+                if self.attackChances <= 0 && self.bossHealth > 0 {
+                    showGameOver()
+                }
+
             },
             .wait(forDuration: shakeDur + buffer),
-
+            
+            
             // 3) Slide cards back up into play area
             .run { [weak self] in
                 guard let self = self else { return }
