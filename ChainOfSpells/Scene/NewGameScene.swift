@@ -22,8 +22,8 @@ class NewGameScene: SKScene {
     private let deckCountLabel = SKLabelNode(fontNamed: fontName)
 
     // MARK: Buttons & Selection
-    private let attackButton = SKSpriteNode(imageNamed: "attack_button")
-    private let discardButton = SKSpriteNode(imageNamed: "discard_button")
+    private let attackButton = SKSpriteNode(imageNamed: "btn-attack")
+    private let discardButton = SKSpriteNode(imageNamed: "btn-discard")
     private var playAreaCards = [CardNode]()
     private var selectedCards = [CardNode]()
 
@@ -47,6 +47,7 @@ class NewGameScene: SKScene {
     private let chancesLabel = SKLabelNode(fontNamed: fontName)
     private var discardLeft = 3
     private let discardLeftLabel = SKLabelNode(fontNamed: fontName)
+    private let comboBackground = SKSpriteNode(imageNamed: "combo-bg")
     private let comboInfoLabel = SKLabelNode(fontNamed: fontName)
     private let gameOverLabel = SKLabelNode(fontNamed: fontName)
     private var isAnimating = false
@@ -70,6 +71,10 @@ class NewGameScene: SKScene {
         updateButtonVisibility()
         drawCardsFromDeck()
 
+        let cameraNode = SKCameraNode()
+        self.camera = cameraNode
+        cameraNode.position = CGPoint(x: frame.midX, y: frame.midY)
+        addChild(cameraNode)
     }
     
     // MARK: UPDATE ON PLAYER PROGRESSION
@@ -125,7 +130,7 @@ class NewGameScene: SKScene {
 
         [attackButton, discardButton].forEach { button in
             button.zPosition = 10
-            button.scale(to: frame.size, width: false, multiplier: 0.07)
+            button.scale(to: frame.size, width: false, multiplier: 0.09)
             button.isHidden = true
             addChild(button)
         }
@@ -218,9 +223,6 @@ class NewGameScene: SKScene {
         addChild(bossSprite)
         startBossIdleAnimation()
 
-    
-
-       
     }
     
     private func startBossIdleAnimation() {
@@ -261,6 +263,10 @@ class NewGameScene: SKScene {
         playerDiscard.scale(to: frame.size, width: false, multiplier: 0.1)
         addChild(playerDiscard)
         addChild(discardLeftLabel)
+        
+//        comboBackground.position = CGPoint(x: 70, y: chancesLabel.position.y + 50)
+//        comboBackground.scale(to: frame.size, width: true, multiplier: 0.15)
+//        addChild(comboBackground)
         
         comboInfoLabel.text = ""
         comboInfoLabel.fontSize = 20
@@ -495,10 +501,34 @@ class NewGameScene: SKScene {
 
 
     // MARK: - Attack & Discard
+	private func shakeBackground(duration: TimeInterval = 0.6, amplitude: CGFloat = 15) {
+        guard let cam = camera else { return }
+        let originalPosition = cam.position
+
+        // How many small shakes?
+        let shakeCount = Int(duration / 0.02)
+        var actions = [SKAction]()
+
+        for _ in 0..<shakeCount {
+            // random offset in ±amplitude
+            let dx = CGFloat.random(in: -amplitude...amplitude)
+            let dy = CGFloat.random(in: -amplitude...amplitude)
+            let shake = SKAction.move(to: CGPoint(x: originalPosition.x + dx,
+                                                   y: originalPosition.y + dy),
+                                      duration: 0.02)
+            shake.timingMode = .easeOut
+            actions.append(shake)
+        }
+
+        // then return to the original spot
+        actions.append(SKAction.move(to: originalPosition, duration: 0.02))
+
+        cam.run(SKAction.sequence(actions))
+	}
+
+	
     private func handleAttack() {
         guard !selectedCards.isEmpty else { return }
-        attackChances -= 1
-        chancesLabel.text = "x\(attackChances)"
 
         let base = selectedCards.reduce(0) { $0 + $1.attackValue }
         let (name, mult) = evaluateCombo(for: selectedCards)
@@ -506,9 +536,9 @@ class NewGameScene: SKScene {
         print("Attack: \(name) ×\(mult) → Base = \(base), Damage = \(total)")
         
         updateBossHealth(damage: total)
-//        replaceSelectedCards()
-//        updateDeckCount()
-//        updateButtonVisibility()
+        
+        guard bossHealth > 0 else { return }
+        
         animateHandTransitionAfterAttack()
 
         if attackChances <= 0 && bossHealth > 0 { showGameOver() }
@@ -755,20 +785,21 @@ class NewGameScene: SKScene {
         attackButton.isHidden = true
         discardButton.isHidden = true
 
-        // 1) Compute staging vs. final spots
-        let stagingOffset: CGFloat = -55
-        let finalPositions = playAreaCards.map { $0.originalPosition }
-        let stagingPositions = finalPositions.map { CGPoint(x: $0.x, y: $0.y + stagingOffset) }
+        // Precompute positions
+        let stagingOffset: CGFloat    = -55
+        let finalPositions            = playAreaCards.map { $0.originalPosition }
+        let stagingPositions          = finalPositions.map { CGPoint(x: $0.x, y: $0.y + stagingOffset) }
 
-        // 2) Timings
-        let moveDur: TimeInterval = 0.5
-        let buffer: TimeInterval = 0.05
-        let replacementDur: TimeInterval = 0.8  // ~0.6 flip/move + 0.2 pop
+        // Timings
+        let moveDur: TimeInterval     = 0.5
+        let buffer: TimeInterval      = 0.05
+        let shakeDur: TimeInterval    = 0.6    // match your shakeBackground duration
+        let replacementDur: TimeInterval = 0.8
         let postReplaceBuffer: TimeInterval = 0.1
 
         run(.sequence([
 
-            // → Phase 1: all cards slide down to staging
+            // 1) Slide all cards down to staging
             .run { [weak self] in
                 guard let self = self else { return }
                 for (card, target) in zip(self.playAreaCards, stagingPositions) {
@@ -779,7 +810,16 @@ class NewGameScene: SKScene {
             },
             .wait(forDuration: moveDur + buffer),
 
-            // → Phase 2: slide them all back up to final positions
+            // 2) Boss attack shake & decrement chance
+            .run { [weak self] in
+                guard let self = self else { return }
+                self.shakeBackground(duration: shakeDur)
+                self.attackChances -= 1
+                self.chancesLabel.text = "x\(self.attackChances)"
+            },
+            .wait(forDuration: shakeDur + buffer),
+
+            // 3) Slide cards back up into play area
             .run { [weak self] in
                 guard let self = self else { return }
                 for card in self.playAreaCards {
@@ -790,18 +830,16 @@ class NewGameScene: SKScene {
             },
             .wait(forDuration: moveDur + buffer),
 
-            // → Phase 3: replace the selected cards
+            // 4) Replace played cards
             .run { [weak self] in
-                guard let self = self else { return }
-                self.replaceSelectedCards()
+                self?.replaceSelectedCards()
             },
             .wait(forDuration: replacementDur + postReplaceBuffer),
 
-            // → Phase 4: glow every card exactly once
+            // 5) Glow & restore UI
             .run { [weak self] in
                 guard let self = self else { return }
                 self.playAreaCards.forEach { self.addTemporaryGlow(to: $0) }
-                // restore UI
                 self.updateDeckCount()
                 self.updateButtonVisibility()
                 self.isAnimating = false
