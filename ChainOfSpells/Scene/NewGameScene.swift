@@ -56,6 +56,7 @@ class NewGameScene: SKScene {
     private let attackSound = SKAction.playSoundFileNamed("attack.mp3", waitForCompletion: false)
     private let clickSound = SKAction.playSoundFileNamed("button-click.mp3", waitForCompletion: false)
     private let cardDrawSound = SKAction.playSoundFileNamed("card-draw.mp3", waitForCompletion: false)
+    private var backgroundMusicNode: SKAudioNode!
     
     // UI
     private var background = SKSpriteNode(imageNamed: "")
@@ -80,6 +81,16 @@ class NewGameScene: SKScene {
         self.camera = cameraNode
         cameraNode.position = CGPoint(x: frame.midX, y: frame.midY)
         addChild(cameraNode)
+        
+        if let path = Bundle.main.path(forResource: "forest-bg-music", ofType: "mp3") {
+            // Initialize from that path
+            let url = URL(fileURLWithPath: path)
+            backgroundMusicNode = SKAudioNode(url: url)
+            backgroundMusicNode?.autoplayLooped = true
+            addChild(backgroundMusicNode!)
+        } else {
+            print("⚠️ backgroundMusic.mp3 not found in bundle!")
+        }
     }
     
   
@@ -355,13 +366,13 @@ class NewGameScene: SKScene {
     private func select(_ card: CardNode, duration: TimeInterval) {
         guard selectedCards.count < maxSelection else { return }
         card.isAnimating = true
+        run(clickSound)
         let up = CGPoint(x: card.position.x, y: card.originalPosition.y + 20)
         let move = SKAction.move(to: up, duration: duration)
         move.timingMode = .easeInEaseOut
         card.run(move) {
             card.isAnimating = false
             card.isSelected = true
-            
             self.addGlow(to: card)
             
             self.selectedCards.append(card)
