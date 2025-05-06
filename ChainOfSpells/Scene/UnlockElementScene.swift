@@ -110,7 +110,7 @@ class UnlockElementScene : SKScene {
         gameScene.scaleMode = .aspectFill
         UserDefaults.standard.playerModel.elements.append(selectedElement)
         // Tampilkan scene
-        self.view!.presentScene(gameScene)
+        self.view!.presentScene(gameScene,transition: SKTransition.fade(withDuration: 0.5))
         
   
 

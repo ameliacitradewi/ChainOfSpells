@@ -282,6 +282,11 @@ class NewGameScene: SKScene {
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
         let location = touch.location(in: self)
+        
+        if childNode(withName: "restartWindow") != nil {
+              // Block background interaction while popup is up
+              return
+          }
 
         if !selectedCards.isEmpty {
             if attackButton.contains(location) { handleAttack(); return }
@@ -298,6 +303,32 @@ class NewGameScene: SKScene {
 //        if !isAnimating && deckNode.contains(location) {
 //            drawCardsFromDeck()
 //        }
+    }
+    
+    
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        guard let touch = touches.first else { return }
+        let location = touch.location(in: self)
+        let node = self.atPoint(location)
+
+        // If the popup is showing, allow interaction only with the popup
+        if childNode(withName: "restartWindow") != nil {
+            if node.name == "restartButton" {
+                restartGame()
+            }
+            // Ignore all other touches while popup is visible
+            return
+        }
+
+        // Your regular gameplay touch logic here
+    }
+    
+    func restartGame() {
+        let scene = NewGameScene(size: self.frame.size)
+        scene.scaleMode = .aspectFill
+        scene.stageInfo = self.stageInfo
+        self.view?.presentScene(scene, transition: SKTransition.fade(withDuration: 0.5))
+
     }
 
     // MARK: - Card Selection
@@ -573,6 +604,15 @@ class NewGameScene: SKScene {
         addChild(gameOverLabel)
         gameOverLabel.run(.sequence([.unhide(), .scale(to: 1.2, duration: 0.5), .scale(to: 0.9, duration: 0.3), .scale(to: 1.0, duration: 0.2)]))
         isUserInteractionEnabled = false
+        // Delay the call to gotoNextLevel by 3 seconds
+           run(SKAction.sequence([
+               SKAction.wait(forDuration: 2.0),
+               SKAction.run { [weak self] in
+                   self?.showRestartWindow()
+                   self?.isUserInteractionEnabled = true
+
+               }
+           ]))
     }
     
     // MARK: - Boss Shake Animation
@@ -865,6 +905,31 @@ class NewGameScene: SKScene {
         ]))
     }
     
+    func showRestartWindow() {
+        // Dim background
+        let dimBackground = SKSpriteNode(color: UIColor.black.withAlphaComponent(0.6), size: self.size)
+        dimBackground.name = "dimBackground"
+        dimBackground.position = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
+        dimBackground.zPosition = 100
+        addChild(dimBackground)
+
+        // Popup window
+        let window = SKSpriteNode(color: .white, size: CGSize(width: 300, height: 200))
+        window.name = "restartWindow"
+        window.zPosition = 101
+        window.position = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
+        addChild(window)
+
+        // Restart button
+        let restartButton = SKLabelNode(text: "Restart")
+        restartButton.name = "restartButton"
+        restartButton.fontName = "AvenirNext-Bold"
+        restartButton.fontSize = 24
+        restartButton.fontColor = .blue
+        restartButton.position = CGPoint(x: 0, y: -50)
+        restartButton.zPosition = 102
+        window.addChild(restartButton)
+    }
     
     
     private func gotoNextLevel() {
@@ -875,7 +940,7 @@ class NewGameScene: SKScene {
             let gameScene = UnlockElementScene(size: self.view!.bounds.size)
             gameScene.scaleMode = .aspectFill
             // Tampilkan scene
-            self.view!.presentScene(gameScene)
+            self.view!.presentScene(gameScene,transition: SKTransition.fade(withDuration: 0.5))
             return
         }
      
@@ -884,7 +949,7 @@ class NewGameScene: SKScene {
         gameScene.stageInfo = stages[UserDefaults.standard.playerModel.currentStage]
         gameScene.scaleMode = .aspectFill
         // Tampilkan scene
-        self.view!.presentScene(gameScene)
+        self.view!.presentScene(gameScene,transition: SKTransition.fade(withDuration: 0.5))
     }
 
 }

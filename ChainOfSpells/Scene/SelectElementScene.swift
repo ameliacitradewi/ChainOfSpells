@@ -125,7 +125,7 @@ class SelectElementScene : SKScene {
         gameScene.scaleMode = .aspectFill
         UserDefaults.standard.playerModel.elements = [selectedElement]
         // Tampilkan scene
-        self.view!.presentScene(gameScene)
+        self.view!.presentScene(gameScene,transition: SKTransition.fade(withDuration: 0.5))
         
   
 

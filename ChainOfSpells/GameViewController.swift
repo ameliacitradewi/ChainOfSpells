@@ -21,7 +21,7 @@ class GameViewController: UIViewController {
 			scene.scaleMode = .aspectFill
 			
 			// Tampilkan scene
-			view.presentScene(scene)
+			view.presentScene(scene,transition: SKTransition.fade(withDuration: 0.5))
 			
 			view.ignoresSiblingOrder = true
 			view.showsFPS = true
