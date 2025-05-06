@@ -54,7 +54,7 @@ class NewGameScene: SKScene {
     // UI
     private var background = SKSpriteNode(imageNamed: "")
     private let playerHp = SKSpriteNode(imageNamed: "player_hp")
-    private let playerDiscard = SKSpriteNode(imageNamed: "player_hp")
+    private let playerDiscard = SKSpriteNode(imageNamed: "player_discard")
 
     
     // MARK: - Lifecycle
@@ -266,7 +266,7 @@ class NewGameScene: SKScene {
         comboInfoLabel.fontSize = 20
         comboInfoLabel.fontColor = .yellow
         comboInfoLabel.horizontalAlignmentMode = .left
-		comboInfoLabel.position = CGPoint(x: 50, y: chancesLabel.position.y + 30)
+		comboInfoLabel.position = CGPoint(x: 50, y: chancesLabel.position.y + 40)
         addChild(comboInfoLabel)
     }
 
@@ -425,16 +425,52 @@ class NewGameScene: SKScene {
         animateReplacement(at: positions, remaining: positions.count)
     }
 
+//    private func animateReplacement(at positions: [CGPoint], remaining: Int) {
+//        var left = remaining
+//        for pos in positions {
+//            guard !currentDeck.isEmpty else {
+//                left -= 1
+//                if left == 0 { isAnimating = false; updateDeckCount() }
+//                continue
+//            }
+//            let def = currentDeck.removeFirst()
+//            updateDeckCount()
+//            let card = CardNode(texture: cardBackTexture)
+//            card.position = deckNode.position
+//            card.originalPosition = pos
+//            card.attackValue = def.value
+//            card.element = def.element
+//            card.valueLabel.text = "\(def.value)"
+//            card.valueLabel.isHidden = true
+//            scaleCard(card)
+//            addChild(card)
+//            playAreaCards.append(card)
+//
+//            animateCard(card, to: pos) {
+//                left -= 1
+//                if left == 0 { self.isAnimating = false }
+//            }
+//        }
+//    }
+    
     private func animateReplacement(at positions: [CGPoint], remaining: Int) {
         var left = remaining
+
         for pos in positions {
+            // If the deck is empty, just count down
             guard !currentDeck.isEmpty else {
                 left -= 1
-                if left == 0 { isAnimating = false; updateDeckCount() }
+                if left == 0 {
+                    self.isAnimating = false
+                    self.updateDeckCount()
+                }
                 continue
             }
+
+            // Pull next card, create node, add to play area
             let def = currentDeck.removeFirst()
             updateDeckCount()
+
             let card = CardNode(texture: cardBackTexture)
             card.position = deckNode.position
             card.originalPosition = pos
@@ -446,12 +482,17 @@ class NewGameScene: SKScene {
             addChild(card)
             playAreaCards.append(card)
 
+            // Animate flip/move/pop into place…
             animateCard(card, to: pos) {
                 left -= 1
-                if left == 0 { self.isAnimating = false }
+                if left == 0 {
+                    // All replacements done
+                    self.isAnimating = false
+                }
             }
         }
     }
+
 
     // MARK: - Attack & Discard
     private func handleAttack() {
@@ -465,9 +506,10 @@ class NewGameScene: SKScene {
         print("Attack: \(name) ×\(mult) → Base = \(base), Damage = \(total)")
         
         updateBossHealth(damage: total)
-        replaceSelectedCards()
-        updateDeckCount()
-        updateButtonVisibility()
+//        replaceSelectedCards()
+//        updateDeckCount()
+//        updateButtonVisibility()
+        animateHandTransitionAfterAttack()
 
         if attackChances <= 0 && bossHealth > 0 { showGameOver() }
     }
@@ -559,7 +601,7 @@ class NewGameScene: SKScene {
             // Completion handler if needed
         }
         
-        victoryLabel.text = "You Win!"
+        victoryLabel.text = "Enemy Defeated!"
         victoryLabel.fontSize = 100
         victoryLabel.fontColor = .yellow
         victoryLabel.position = CGPoint(x: frame.midX, y: frame.midY)
@@ -706,5 +748,67 @@ class NewGameScene: SKScene {
         let pulse = SKAction.repeatForever(SKAction.sequence([fadeOut, fadeIn]))
         glow.run(pulse)
     }
+    
+    // MARK: – Animate Hand Transition after Attack
+    private func animateHandTransitionAfterAttack() {
+        isAnimating = true
+        attackButton.isHidden = true
+        discardButton.isHidden = true
+
+        // 1) Compute staging vs. final spots
+        let stagingOffset: CGFloat = -55
+        let finalPositions = playAreaCards.map { $0.originalPosition }
+        let stagingPositions = finalPositions.map { CGPoint(x: $0.x, y: $0.y + stagingOffset) }
+
+        // 2) Timings
+        let moveDur: TimeInterval = 0.5
+        let buffer: TimeInterval = 0.05
+        let replacementDur: TimeInterval = 0.8  // ~0.6 flip/move + 0.2 pop
+        let postReplaceBuffer: TimeInterval = 0.1
+
+        run(.sequence([
+
+            // → Phase 1: all cards slide down to staging
+            .run { [weak self] in
+                guard let self = self else { return }
+                for (card, target) in zip(self.playAreaCards, stagingPositions) {
+                    let m = SKAction.move(to: target, duration: moveDur)
+                    m.timingMode = .easeInEaseOut
+                    card.run(m)
+                }
+            },
+            .wait(forDuration: moveDur + buffer),
+
+            // → Phase 2: slide them all back up to final positions
+            .run { [weak self] in
+                guard let self = self else { return }
+                for card in self.playAreaCards {
+                    let m = SKAction.move(to: card.originalPosition, duration: moveDur)
+                    m.timingMode = .easeInEaseOut
+                    card.run(m)
+                }
+            },
+            .wait(forDuration: moveDur + buffer),
+
+            // → Phase 3: replace the selected cards
+            .run { [weak self] in
+                guard let self = self else { return }
+                self.replaceSelectedCards()
+            },
+            .wait(forDuration: replacementDur + postReplaceBuffer),
+
+            // → Phase 4: glow every card exactly once
+            .run { [weak self] in
+                guard let self = self else { return }
+                self.playAreaCards.forEach { self.addTemporaryGlow(to: $0) }
+                // restore UI
+                self.updateDeckCount()
+                self.updateButtonVisibility()
+                self.isAnimating = false
+            }
+
+        ]))
+    }
+
 }
 
