@@ -52,6 +52,11 @@ class NewGameScene: SKScene {
     private let gameOverLabel = SKLabelNode(fontNamed: fontName)
     private var isAnimating = false
     
+    // MARK: – Sound Effects
+    private let attackSound = SKAction.playSoundFileNamed("attack.mp3", waitForCompletion: false)
+    private let clickSound = SKAction.playSoundFileNamed("button-click.mp3", waitForCompletion: false)
+    private let cardDrawSound = SKAction.playSoundFileNamed("card-draw.mp3", waitForCompletion: false)
+    
     // UI
     private var background = SKSpriteNode(imageNamed: "")
     private let playerHp = SKSpriteNode(imageNamed: "player_hp")
@@ -282,10 +287,13 @@ class NewGameScene: SKScene {
         let location = touch.location(in: self)
 
         if !selectedCards.isEmpty {
-            if attackButton.contains(location) { handleAttack(); return }
+            if attackButton.contains(location) {
+                run(clickSound)
+                handleAttack(); return }
             if discardButton.contains(location) {
                 // only allow if still have discards left
                 guard discardLeft > 0 else { return }
+                run(clickSound)
                 handleDiscard(); return
             }
         }
@@ -407,6 +415,9 @@ class NewGameScene: SKScene {
         scaleCard(card)
 //        addGlow(to: card)
         addChild(card)
+        
+        run(cardDrawSound)
+        
         playAreaCards.append(card)
 
         // Animate move/flip/pop, then recurse—no glow here any more
@@ -486,6 +497,9 @@ class NewGameScene: SKScene {
             card.valueLabel.isHidden = true
             scaleCard(card)
             addChild(card)
+            
+            run(cardDrawSound)
+            
             playAreaCards.append(card)
 
             // Animate flip/move/pop into place…
@@ -528,6 +542,8 @@ class NewGameScene: SKScene {
 
 	
     private func handleAttack() {
+        run(attackSound)
+        
         guard !selectedCards.isEmpty else { return }
 
         let base = selectedCards.reduce(0) { $0 + $1.attackValue }
@@ -539,7 +555,11 @@ class NewGameScene: SKScene {
         
         guard bossHealth > 0 else { return }
         
-        animateHandTransitionAfterAttack()
+        let delay = SKAction.wait(forDuration: 1.0)
+        let callTransition = SKAction.run { [weak self] in
+            self?.animateHandTransitionAfterAttack()
+        }
+        run(.sequence([delay, callTransition]))
 
         if attackChances <= 0 && bossHealth > 0 { showGameOver() }
     }
@@ -884,7 +904,7 @@ class NewGameScene: SKScene {
 
     private func createBossFlashAction() -> SKAction {
         // hit effect colorize to white (full blend), then back to normal
-        let flashOn  = SKAction.colorize(with: .white, colorBlendFactor: 1.0, duration: 0.5)
+        let flashOn  = SKAction.colorize(with: .red, colorBlendFactor: 1.0, duration: 0.5)
         let flashOff = SKAction.colorize(withColorBlendFactor: 0.0, duration: 0.5)
         return .sequence([flashOn, flashOff])
     }
