@@ -523,6 +523,21 @@ class NewGameScene: SKScene {
         // Stop idle animation
         bossSprite.removeAction(forKey: "bossIdle")
         
+        bossSprite.texture = SKTexture(imageNamed: "boss-lose")
+        
+        // 2. Create fade-out animation
+        let fadeOut = SKAction.fadeOut(withDuration: 2.0) // 2-second fade
+        let removeNode = SKAction.removeFromParent()
+        
+        // Optional: Combine with sinking movement
+        let sink = SKAction.moveBy(x: 0, y: -30, duration: 2.0)
+        let fadeAndMove = SKAction.group([fadeOut, sink])
+        
+        // 3. Run sequence
+        bossSprite.run(.sequence([fadeAndMove, removeNode])) {
+            // Completion handler if needed
+        }
+        
         victoryLabel.text = "You Win!"
         victoryLabel.fontSize = 100
         victoryLabel.fontColor = .yellow
