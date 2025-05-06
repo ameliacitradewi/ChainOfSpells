@@ -15,7 +15,7 @@ class NewGameScene: SKScene {
     private var deck: [CardModel] = []
     private var discardPile: [CardModel] = []
     private var currentDeck: [CardModel] = []
-    private let cardBackTexture = SKTexture(imageNamed: "card_back")
+    private let cardBackTexture = SKTexture(imageNamed: "back-card")
     private let spellBookTexture = SKTexture(imageNamed: "spell_book")
 
     private var deckNode: SKSpriteNode!
@@ -51,6 +51,11 @@ class NewGameScene: SKScene {
     private let comboInfoLabel = SKLabelNode(fontNamed: fontName)
     private let gameOverLabel = SKLabelNode(fontNamed: fontName)
     private var isAnimating = false
+    
+    // MARK: – Sound Effects
+    private let attackSound = SKAction.playSoundFileNamed("attack.mp3", waitForCompletion: false)
+    private let clickSound = SKAction.playSoundFileNamed("button-click.mp3", waitForCompletion: false)
+    private let cardDrawSound = SKAction.playSoundFileNamed("card-draw.mp3", waitForCompletion: false)
     
     // UI
     private var background = SKSpriteNode(imageNamed: "")
@@ -292,10 +297,13 @@ class NewGameScene: SKScene {
           }
 
         if !selectedCards.isEmpty {
-            if attackButton.contains(location) { handleAttack(); return }
+            if attackButton.contains(location) {
+                run(clickSound)
+                handleAttack(); return }
             if discardButton.contains(location) {
                 // only allow if still have discards left
                 guard discardLeft > 0 else { return }
+                run(clickSound)
                 handleDiscard(); return
             }
         }
@@ -443,6 +451,9 @@ class NewGameScene: SKScene {
         scaleCard(card)
 //        addGlow(to: card)
         addChild(card)
+        
+        run(cardDrawSound)
+        
         playAreaCards.append(card)
 
         // Animate move/flip/pop, then recurse—no glow here any more
@@ -547,6 +558,9 @@ class NewGameScene: SKScene {
             card.valueLabel.isHidden = true
             scaleCard(card)
             addChild(card)
+            
+            run(cardDrawSound)
+            
             playAreaCards.append(card)
 
             // Animate flip/move/pop into place…
@@ -600,7 +614,11 @@ class NewGameScene: SKScene {
         
         guard bossHealth > 0 else { return }
         
-        animateHandTransitionAfterAttack()
+        let delay = SKAction.wait(forDuration: 1.0)
+        let callTransition = SKAction.run { [weak self] in
+            self?.animateHandTransitionAfterAttack()
+        }
+        run(.sequence([delay, callTransition]))
 
 
     }
@@ -903,8 +921,7 @@ class NewGameScene: SKScene {
                 let (name, mult) = evaluateCombo(for: selectedCards)
                 let total = Int(Double(base) * mult)
                 print("Attack: \(name) ×\(mult) → Base = \(base), Damage = \(total)")
-                
-                
+                run(attackSound)
                 guard bossHealth > 0 else { return }
                 updateBossHealth(damage: total)
                 self.replaceSelectedCardsAfterAttack()
@@ -940,7 +957,6 @@ class NewGameScene: SKScene {
                     let m = SKAction.move(to: card.originalPosition, duration: moveDur)
                     m.timingMode = .easeInEaseOut
                     card.run(m)
-                    print("GO UP")
                 }
                 playAreaCards.removeAll(where: { self.selectedCards.contains($0) })
                 selectedCards.removeAll()
