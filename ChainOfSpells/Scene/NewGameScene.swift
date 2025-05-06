@@ -149,9 +149,9 @@ class NewGameScene: SKScene {
         bossSprite = SKSpriteNode(imageNamed: stageInfo?.enemy.name ?? "")
         bossHealth    = stageInfo?.enemy.hp ?? 0
         bossMaxHealth = stageInfo?.enemy.hp ?? 0
-        bossSprite.position = CGPoint(x: frame.midX, y: frame.height - 170)
+        bossSprite.position = CGPoint(x: frame.midX, y: frame.height - 150)
         bossSprite.zPosition = -3
-        bossSprite.scale(to: frame.size, width: false, multiplier: 0.6)
+        bossSprite.scale(to: frame.size, width: false, multiplier: 0.5)
         addChild(bossSprite)
         startBossIdleAnimation()
 
@@ -203,7 +203,7 @@ class NewGameScene: SKScene {
         bossHealthLabel.text      = "\(bossHealth)/\(bossMaxHealth)"
         bossHealthLabel.fontName = "Helvetica-Bold"
         bossHealthLabel.fontSize  = 24
-        bossHealthLabel.fontColor = .black
+        bossHealthLabel.fontColor = .white
         bossHealthLabel.position  = CGPoint(x: 0, y: hpYPosition - 30)
         bossHealthBar.addChild(bossHealthLabel)
     }

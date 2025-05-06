@@ -15,7 +15,7 @@ enum Element: String, CaseIterable, Codable {
 var fontName : String = "Arial Bold"
 
 var stages : [StageModel] =  [
-    StageModel(id: 1,enemy: EnemyModel( name: "enemy_1", hp: 10),background: "background_1")
+    StageModel(id: 1,enemy: EnemyModel( name: "enemy_1", hp: 10),background: "environtment-bg")
 ]
 
 
