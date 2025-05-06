@@ -606,6 +606,8 @@ class NewGameScene: SKScene {
         // Trigger shake when damage is taken
         if damage > 0 {
             bossSprite.run(createBossShakeAnimation())
+            //hit effect
+            bossSprite.run(createBossFlashAction())
         }
         
         if bossHealth <= 0 { bossDefeated() }
@@ -880,5 +882,11 @@ class NewGameScene: SKScene {
         self.view!.presentScene(gameScene)
     }
 
+    private func createBossFlashAction() -> SKAction {
+        // hit effect colorize to white (full blend), then back to normal
+        let flashOn  = SKAction.colorize(with: .white, colorBlendFactor: 1.0, duration: 0.5)
+        let flashOff = SKAction.colorize(withColorBlendFactor: 0.0, duration: 0.5)
+        return .sequence([flashOn, flashOff])
+    }
 }
 
