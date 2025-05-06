@@ -238,7 +238,10 @@ class NewGameScene: SKScene {
         
         let idleAnimation = SKAction.animate(with: idleFrames, timePerFrame: 0.15, resize: false, restore: true)
         let repeatIdle = SKAction.repeatForever(idleAnimation)
+//        let flashAnimation = SKAction.repeatForever(createBossFlashAction())
         bossSprite.run(repeatIdle, withKey: "bossIdle")
+//        bossSprite.run(flashAnimation, withKey: "hit")
+
     }
 
 
@@ -953,12 +956,16 @@ class NewGameScene: SKScene {
         // Tampilkan scene
         self.view!.presentScene(gameScene,transition: SKTransition.fade(withDuration: 0.5))
     }
+    
+  
 
     private func createBossFlashAction() -> SKAction {
         // hit effect colorize to white (full blend), then back to normal
-        let flashOn  = SKAction.colorize(with: .white, colorBlendFactor: 1.0, duration: 0.5)
-        let flashOff = SKAction.colorize(withColorBlendFactor: 0.0, duration: 0.5)
+        let flashOn  = SKAction.colorize(with: UIColor(named: "HitEffectColor")!, colorBlendFactor: 1.0, duration: 0.25)
+        let flashOff = SKAction.colorize(withColorBlendFactor: 0.0, duration: 0.25)
         return .sequence([flashOn, flashOff])
+        
+        
     }
 }
 
