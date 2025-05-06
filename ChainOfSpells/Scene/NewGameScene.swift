@@ -16,6 +16,8 @@ class NewGameScene: SKScene {
     private var discardPile: [CardModel] = []
     private var currentDeck: [CardModel] = []
     private let cardBackTexture = SKTexture(imageNamed: "card_back")
+    private let spellBookTexture = SKTexture(imageNamed: "spell_book")
+
     private var deckNode: SKSpriteNode!
     private let deckCountLabel = SKLabelNode(fontNamed: fontName)
 
@@ -51,6 +53,8 @@ class NewGameScene: SKScene {
     
     // UI
     private var background = SKSpriteNode(imageNamed: "")
+    private let playerHp = SKSpriteNode(imageNamed: "player_hp")
+
     
     // MARK: - Lifecycle
     override func didMove(to view: SKView) {
@@ -60,8 +64,10 @@ class NewGameScene: SKScene {
         setupDeckNode()
         setupButtons()
         setupBoss()
+        setupBossHealthBar()
         setupLabels()
         updateButtonVisibility()
+        drawCardsFromDeck()
 
     }
     
@@ -98,9 +104,10 @@ class NewGameScene: SKScene {
     }
 
     private func setupDeckNode() {
-        deckNode = SKSpriteNode(texture: cardBackTexture)
+        deckNode = SKSpriteNode(texture: spellBookTexture)
         deckNode.position = CGPoint(x: frame.midX + 350, y: frame.midY - 130)
-        scaleCard(deckNode)
+        deckNode.scale(to: frame.size, width: false, multiplier: 0.3)
+//        scaleCard(deckNode)
         addChild(deckNode)
 
         deckCountLabel.fontSize = 24
@@ -143,27 +150,16 @@ class NewGameScene: SKScene {
         }
     }
     
-    // MARK: – Boss Setup (using centerRect for slicing)
-    private func setupBoss() {
-        // 1) Usual boss sprite
-        bossSprite = SKSpriteNode(imageNamed: stageInfo?.enemy.name ?? "")
-        bossHealth    = stageInfo?.enemy.hp ?? 0
-        bossMaxHealth = stageInfo?.enemy.hp ?? 0
-        bossSprite.position = CGPoint(x: frame.midX, y: frame.height - 150)
-        bossSprite.zPosition = -3
-        bossSprite.scale(to: frame.size, width: false, multiplier: 0.5)
-        addChild(bossSprite)
-        startBossIdleAnimation()
-
+    private func setupBossHealthBar() {
         // 2) Bar container
         bossHealthBar = SKNode()
-        bossHealthBar.position = bossSprite.position
+        bossHealthBar.position =  CGPoint(x: frame.midX, y: frame.maxY)
         addChild(bossHealthBar)
-
+        
         // 3) Create the HP‑bar using slicing:
         let fullBarWidth: CGFloat = 200
         let barHeight:    CGFloat = 30
-        let hpYPosition: CGFloat = 140
+        let hpYPosition: CGFloat = -30
 
         let hpBar = SKSpriteNode(imageNamed: "hp-bar")
         hpBar.name = "healthBar"
@@ -204,8 +200,25 @@ class NewGameScene: SKScene {
         bossHealthLabel.fontName = "Helvetica-Bold"
         bossHealthLabel.fontSize  = 24
         bossHealthLabel.fontColor = .white
-        bossHealthLabel.position  = CGPoint(x: 0, y: hpYPosition - 30)
+        bossHealthLabel.position  = CGPoint(x: 0, y: hpYPosition - 40)
         bossHealthBar.addChild(bossHealthLabel)
+    }
+    
+    // MARK: – Boss Setup (using centerRect for slicing)
+    private func setupBoss() {
+        // 1) Usual boss sprite
+        bossSprite = SKSpriteNode(imageNamed: stageInfo?.enemy.name ?? "")
+        bossHealth    = stageInfo?.enemy.hp ?? 0
+        bossMaxHealth = stageInfo?.enemy.hp ?? 0
+        bossSprite.position = CGPoint(x: frame.midX, y: frame.height - 150)
+        bossSprite.zPosition = -3
+        bossSprite.scale(to: frame.size, width: false, multiplier: 0.5)
+        addChild(bossSprite)
+        startBossIdleAnimation()
+
+    
+
+       
     }
     
     private func startBossIdleAnimation() {
@@ -227,12 +240,15 @@ class NewGameScene: SKScene {
 
     // MARK: - Labels Setup
     private func setupLabels() {
-        chancesLabel.text = "Attacks Left: \(attackChances)"
+        chancesLabel.text = "x\(attackChances)"
         chancesLabel.fontSize = 24
         chancesLabel.fontColor = .white
         chancesLabel.horizontalAlignmentMode = .left
-        chancesLabel.position = CGPoint(x: 50, y: frame.height/2 - 130)
+        chancesLabel.position = CGPoint(x: 70, y: frame.height/2 - 130)
+        playerHp.position = CGPoint(x: 50, y: frame.height/2 - 120)
+        playerHp.scale(to: frame.size, width: false, multiplier: 0.1)
         addChild(chancesLabel)
+        addChild(playerHp)
         
         // Discard left label below chances
         discardLeftLabel.text = "Discards Left: \(discardLeft)"
@@ -266,9 +282,10 @@ class NewGameScene: SKScene {
         for card in playAreaCards where card.contains(location) && !card.isAnimating && !isAnimating {
             handleCardSelection(card); return
         }
-        if !isAnimating && deckNode.contains(location) {
-            drawCardsFromDeck()
-        }
+        
+//        if !isAnimating && deckNode.contains(location) {
+//            drawCardsFromDeck()
+//        }
     }
 
     // MARK: - Card Selection
@@ -328,7 +345,7 @@ class NewGameScene: SKScene {
         let count = min(cardInHand, currentDeck.count)
         guard count > 0 else { isAnimating = false; return }
 
-        let cardWidth = deckNode.frame.width
+        let cardWidth : Double = 70
         let totalWidth = (cardWidth * CGFloat(count)) + (playAreaPadding * CGFloat(count - 1))
         var x = playAreaPosition.x - (totalWidth / 2) + (cardWidth / 2)
         var finalPositions = [CGPoint]()
@@ -436,7 +453,7 @@ class NewGameScene: SKScene {
     private func handleAttack() {
         guard !selectedCards.isEmpty else { return }
         attackChances -= 1
-        chancesLabel.text = "Attacks Left: \(attackChances)"
+        chancesLabel.text = "x\(attackChances)"
 
         let base = selectedCards.reduce(0) { $0 + $1.attackValue }
         let (name, mult) = evaluateCombo(for: selectedCards)
@@ -617,7 +634,7 @@ class NewGameScene: SKScene {
         card.scale(to: frame.size, width: false, multiplier: 0.25)
         card.texture?.filteringMode = .nearest
         if let cardNode = card as? CardNode {
-            cardNode.valueLabel.fontSize = 10 * (card.xScale / 0.25)
+            cardNode.valueLabel.fontSize = 5.2 * (card.xScale / 0.25)
         }
     }
 
@@ -631,7 +648,7 @@ class NewGameScene: SKScene {
         let flip = SKAction.sequence([
             .wait(forDuration: half - flipDuration/2),
             .scaleX(to: 0, duration: flipDuration/2),
-            .run { card.texture = SKTexture(imageNamed: card.element.rawValue); card.valueLabel.isHidden = false },
+            .run { card.texture = SKTexture(imageNamed: card.element.cardAsset); card.valueLabel.isHidden = false },
             .scaleX(to: originalScale, duration: flipDuration/2)
         ])
         let pop = SKAction.sequence([.scale(to: originalScale * 1.1, duration: 0.1), .scale(to: originalScale, duration: 0.1)])

@@ -1,7 +1,7 @@
 {
   "images" : [
     {
-      "filename" : "wind.png",
+      "filename" : "player_hp.png",
       "idiom" : "universal",
       "scale" : "1x"
     },

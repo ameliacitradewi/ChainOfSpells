@@ -14,10 +14,10 @@ class SelectElementScene : SKScene {
     private var selectedElement : Element!
     
     // Element cards selection
-    private let fireCard = SKSpriteNode(imageNamed: Element.fire.rawValue)
-    private let waterCard = SKSpriteNode(imageNamed:  Element.water.rawValue)
-    private let windCard = SKSpriteNode(imageNamed:  Element.wind.rawValue)
-    private let earthCard = SKSpriteNode(imageNamed:  Element.earth.rawValue)
+    private let fireCard = SKSpriteNode(imageNamed: Element.fire.cardAsset)
+    private let waterCard = SKSpriteNode(imageNamed:  Element.water.cardAsset)
+    private let windCard = SKSpriteNode(imageNamed:  Element.wind.cardAsset)
+    private let earthCard = SKSpriteNode(imageNamed:  Element.earth.cardAsset)
     
     
     

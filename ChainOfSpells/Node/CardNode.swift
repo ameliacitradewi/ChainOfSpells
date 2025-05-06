@@ -29,9 +29,12 @@ class CardNode: SKSpriteNode {
 
     // MARK: Label Setup
     private func setupLabel() {
-        valueLabel.fontSize = 40
+        valueLabel.fontSize = 10
+        valueLabel.fontName = cardFontName
+//        valueLabel.fontColor = UIColor(named: "CardTextColor")
         valueLabel.fontColor = .white
-        valueLabel.position = CGPoint(x: 0, y: -40)
+//        valueLabel.addOutline(strokeColor: .red, strokeWidth: 2)
+        valueLabel.position = CGPoint(x: -29, y: 48)
         valueLabel.zPosition = 1
         addChild(valueLabel)
     }

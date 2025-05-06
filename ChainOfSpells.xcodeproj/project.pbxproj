@@ -10,9 +10,22 @@
 		65A904912DC6247900464611 /* ChainOfSpells.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ChainOfSpells.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		4F0E25562DC9B6F2003B1521 /* Exceptions for "ChainOfSpells" folder in "ChainOfSpells" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 65A904902DC6247900464611 /* ChainOfSpells */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		65A904932DC6247900464611 /* ChainOfSpells */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				4F0E25562DC9B6F2003B1521 /* Exceptions for "ChainOfSpells" folder in "ChainOfSpells" target */,
+			);
 			path = ChainOfSpells;
 			sourceTree = "<group>";
 		};
@@ -253,6 +266,8 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 59X728Y3L6;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ChainOfSpells/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
@@ -280,6 +295,8 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 59X728Y3L6;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ChainOfSpells/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
