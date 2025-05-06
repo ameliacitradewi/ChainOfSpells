@@ -24,12 +24,16 @@ enum Element: String, CaseIterable, Codable {
     }
 }
 /// String
-var fontName : String = "Arial Bold"
+var fontName : String = "AlmendraSC-Regular"
 var cardFontName : String = "AlmendraSC-Regular"
 
 
 var stages : [StageModel] =  [
-    StageModel(id: 1,enemy: EnemyModel( name: "enemy_1", hp: 10),background: "environtment-bg")
+    StageModel(id: 1,enemy: enemy1,background: "environtment-bg")
 ]
+
+
+/// Enemy
+var enemy1 = EnemyModel( name: "enemy_1", idleAnimations:  ["boss1","boss2","boss3","boss4","boss5","boss6","boss7"], hp: 10)
 
 

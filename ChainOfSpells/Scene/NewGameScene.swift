@@ -54,6 +54,7 @@ class NewGameScene: SKScene {
     // UI
     private var background = SKSpriteNode(imageNamed: "")
     private let playerHp = SKSpriteNode(imageNamed: "player_hp")
+    private let playerDiscard = SKSpriteNode(imageNamed: "player_hp")
 
     
     // MARK: - Lifecycle
@@ -197,10 +198,11 @@ class NewGameScene: SKScene {
 
         // 6) Health label
         bossHealthLabel.text      = "\(bossHealth)/\(bossMaxHealth)"
-        bossHealthLabel.fontName = "Helvetica-Bold"
-        bossHealthLabel.fontSize  = 24
+        bossHealthLabel.fontName = fontName
+        bossHealthLabel.fontSize  = 12
         bossHealthLabel.fontColor = .white
-        bossHealthLabel.position  = CGPoint(x: 0, y: hpYPosition - 40)
+        bossHealthLabel.position  = CGPoint(x: 0, y: hpYPosition - 4)
+        bossHealthLabel.zPosition = 10
         bossHealthBar.addChild(bossHealthLabel)
     }
     
@@ -224,14 +226,13 @@ class NewGameScene: SKScene {
     private func startBossIdleAnimation() {
         var idleFrames: [SKTexture] = []
         let idleAtlas = SKTextureAtlas(named: "BossIdle")
-
-        for i in 1...4 {
-            let textureName = "boss\(i)"
+        stageInfo?.enemy.idleAnimations.forEach {
+            let textureName = $0
             let texture = idleAtlas.textureNamed(textureName)
             idleFrames.append(texture)
         }
-
-        let idleAnimation = SKAction.animate(with: idleFrames, timePerFrame: 0.25, resize: false, restore: true)
+        
+        let idleAnimation = SKAction.animate(with: idleFrames, timePerFrame: 0.15, resize: false, restore: true)
         let repeatIdle = SKAction.repeatForever(idleAnimation)
         bossSprite.run(repeatIdle, withKey: "bossIdle")
     }
@@ -251,11 +252,14 @@ class NewGameScene: SKScene {
         addChild(playerHp)
         
         // Discard left label below chances
-        discardLeftLabel.text = "Discards Left: \(discardLeft)"
+        discardLeftLabel.text = "x\(discardLeft)"
         discardLeftLabel.fontSize = 24
         discardLeftLabel.fontColor = .white
         discardLeftLabel.horizontalAlignmentMode = .left
-        discardLeftLabel.position = CGPoint(x: 50, y: chancesLabel.position.y - 30)
+        discardLeftLabel.position = CGPoint(x: 70, y: chancesLabel.position.y - 40)
+        playerDiscard.position = CGPoint(x: 50, y: chancesLabel.position.y - 30)
+        playerDiscard.scale(to: frame.size, width: false, multiplier: 0.1)
+        addChild(playerDiscard)
         addChild(discardLeftLabel)
         
         comboInfoLabel.text = ""
@@ -472,7 +476,7 @@ class NewGameScene: SKScene {
         guard !selectedCards.isEmpty else { return }
         
         discardLeft = max(0, discardLeft - 1)
-        discardLeftLabel.text = "Discards Left: \(discardLeft)"
+        discardLeftLabel.text = "x\(discardLeft)"
         if discardLeft == 0 {
             discardButton.color = .gray
             discardButton.colorBlendFactor = 0.7
