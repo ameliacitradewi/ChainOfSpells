@@ -266,9 +266,10 @@ class NewGameScene: SKScene {
         addChild(playerDiscard)
         addChild(discardLeftLabel)
         
-//        comboBackground.position = CGPoint(x: 70, y: chancesLabel.position.y + 50)
-//        comboBackground.scale(to: frame.size, width: true, multiplier: 0.15)
-//        addChild(comboBackground)
+        comboBackground.position = CGPoint(x: 100, y: chancesLabel.position.y + 50)
+        comboBackground.scale(to: frame.size, width: true, multiplier: 0.20)
+		comboBackground.zPosition = -1
+        addChild(comboBackground)
         
         comboInfoLabel.text = ""
         comboInfoLabel.fontSize = 20
