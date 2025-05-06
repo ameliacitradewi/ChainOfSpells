@@ -12,6 +12,8 @@ class CardNode: SKSpriteNode {
     // MARK: Properties
     var isSelected = false
     var originalPosition = CGPoint.zero
+    var stagingPosition = CGPoint.zero
+
     var isAnimating = false
     var attackValue: Int = 0
     var element: Element = Element.fire

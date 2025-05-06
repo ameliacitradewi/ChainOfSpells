@@ -453,18 +453,43 @@ class NewGameScene: SKScene {
                                 index: index + 1)
         }
     }
-
-    private func replaceSelectedCards() {
+    
+    
+    private func cardAttackAnimation() {
         guard !selectedCards.isEmpty else { return }
         let positions = selectedCards.map { $0.originalPosition }
         selectedCards.forEach { card in
             discardPile.append(CardModel(element: card.element, value: card.attackValue))
-            let move = SKAction.group([.moveBy(x: 1000, y: 0, duration: 0.5), .fadeOut(withDuration: 0.3)])
+            let move = SKAction.group([.moveBy(x: 0, y: 500, duration: 0.5), .fadeOut(withDuration: 0.3)])
             card.run(.sequence([move, .removeFromParent()]))
         }
+
+    }
+    
+    private func handleDiscardAnimation() {
+                guard !selectedCards.isEmpty else { return }
+                let positions = selectedCards.map { $0.originalPosition }
+                selectedCards.forEach { card in
+                    discardPile.append(CardModel(element: card.element, value: card.attackValue))
+                    let move = SKAction.group([.moveBy(x: 0, y: -1000, duration: 0.5), .fadeOut(withDuration: 0.3)])
+                    card.run(.sequence([move, .removeFromParent()]))
+                }
+                playAreaCards.removeAll(where: { selectedCards.contains($0) })
+                selectedCards.removeAll()
+        animateReplacement(at: positions, remaining: positions.count,targetPositions : positions)
+    }
+
+    private func replaceSelectedCards() {
+       let positions = selectedCards.map { $0.originalPosition }
         playAreaCards.removeAll(where: { selectedCards.contains($0) })
         selectedCards.removeAll()
-        animateReplacement(at: positions, remaining: positions.count)
+        animateReplacement(at: positions, remaining: positions.count,targetPositions : positions)
+    }
+    
+    private func replaceSelectedCardsAfterAttack() {
+        let originalPosition = selectedCards.map { $0.originalPosition }
+        let positions = selectedCards.map { $0.stagingPosition }
+        animateReplacement(at: originalPosition, remaining: positions.count,targetPositions: positions)
     }
 
 //    private func animateReplacement(at positions: [CGPoint], remaining: Int) {
@@ -495,10 +520,10 @@ class NewGameScene: SKScene {
 //        }
 //    }
     
-    private func animateReplacement(at positions: [CGPoint], remaining: Int) {
+    private func animateReplacement(at originalPositions: [CGPoint], remaining: Int,targetPositions: [CGPoint]) {
         var left = remaining
 
-        for pos in positions {
+        for index in targetPositions.indices {
             // If the deck is empty, just count down
             guard !currentDeck.isEmpty else {
                 left -= 1
@@ -515,7 +540,7 @@ class NewGameScene: SKScene {
 
             let card = CardNode(texture: cardBackTexture)
             card.position = deckNode.position
-            card.originalPosition = pos
+            card.originalPosition = originalPositions[index]
             card.attackValue = def.value
             card.element = def.element
             card.valueLabel.text = "\(def.value)"
@@ -525,7 +550,7 @@ class NewGameScene: SKScene {
             playAreaCards.append(card)
 
             // Animate flip/move/pop into place…
-            animateCard(card, to: pos) {
+            animateCard(card, to: targetPositions[index]) {
                 left -= 1
                 if left == 0 {
                     // All replacements done
@@ -572,11 +597,11 @@ class NewGameScene: SKScene {
         let total = Int(Double(base) * mult)
         print("Attack: \(name) ×\(mult) → Base = \(base), Damage = \(total)")
         
-        updateBossHealth(damage: total)
         
         guard bossHealth > 0 else { return }
         
         animateHandTransitionAfterAttack()
+
 
     }
 
@@ -590,7 +615,7 @@ class NewGameScene: SKScene {
             discardButton.colorBlendFactor = 0.7
         }
         
-        replaceSelectedCards()
+        handleDiscardAnimation()
         updateDeckCount()
         updateButtonVisibility()
     }
@@ -860,16 +885,43 @@ class NewGameScene: SKScene {
             .run { [weak self] in
                 guard let self = self else { return }
                 for (card, target) in zip(self.playAreaCards, stagingPositions) {
+                    card.stagingPosition = target
                     let m = SKAction.move(to: target, duration: moveDur)
                     m.timingMode = .easeInEaseOut
-                    card.run(m)
+                    // Only play animation on card that are not selected
+                    if !self.selectedCards.contains(card){
+                        card.run(m)
+                    }
                 }
             },
             .wait(forDuration: moveDur + buffer),
+            
+            .run { [weak self] in
+                guard let self = self else { return }
+                cardAttackAnimation()
+                let base = selectedCards.reduce(0) { $0 + $1.attackValue }
+                let (name, mult) = evaluateCombo(for: selectedCards)
+                let total = Int(Double(base) * mult)
+                print("Attack: \(name) ×\(mult) → Base = \(base), Damage = \(total)")
+                
+                
+                guard bossHealth > 0 else { return }
+                updateBossHealth(damage: total)
+                self.replaceSelectedCardsAfterAttack()
+                
+            },
+            .wait(forDuration: moveDur + buffer),
+            
+            
+            // 4) Replace played cards
+            .run { [weak self] in
+            },
+            .wait(forDuration: replacementDur + postReplaceBuffer),
 
             // 2) Boss attack shake & decrement chance
             .run { [weak self] in
                 guard let self = self else { return }
+                cardAttackAnimation()
                 self.shakeBackground(duration: shakeDur)
                 self.attackChances -= 1
                 self.chancesLabel.text = "x\(self.attackChances)"
@@ -888,15 +940,18 @@ class NewGameScene: SKScene {
                     let m = SKAction.move(to: card.originalPosition, duration: moveDur)
                     m.timingMode = .easeInEaseOut
                     card.run(m)
+                    print("GO UP")
                 }
+                playAreaCards.removeAll(where: { self.selectedCards.contains($0) })
+                selectedCards.removeAll()
             },
             .wait(forDuration: moveDur + buffer),
 
-            // 4) Replace played cards
-            .run { [weak self] in
-                self?.replaceSelectedCards()
-            },
-            .wait(forDuration: replacementDur + postReplaceBuffer),
+//            // 4) Replace played cards
+//            .run { [weak self] in
+//                self?.replaceSelectedCards()
+//            },
+//            .wait(forDuration: replacementDur + postReplaceBuffer),
 
             // 5) Glow & restore UI
             .run { [weak self] in
