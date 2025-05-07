@@ -1,18 +1,47 @@
 //
-//  NewGameScene.swift
+//  Tutorial2Scene.swift
 //  ChainOfSpells
 //
-//  Created by Mushafa Fadzan Andira on 05/05/25.
+//  Created by Mushafa Fadzan Andira on 07/05/25.
 //
+
+//
+
 
 import SpriteKit
 import SwiftUICore
 
+
+
+
 // MARK: - GameScene
-class NewGameScene: SKScene {
-    var stageInfo : StageModel?
-    // MARK: Deck Properties
-    private var deck: [CardModel] = []
+class Tutorial2Scene: SKScene {
+    // Predetermined Value
+    private var unlockedElement : [Element] = [Element.fire]
+    private var deck: [CardModel] = [
+        CardModel(element: Element.fire, value: 5),
+        CardModel(element: Element.fire, value: 1),
+        CardModel(element: Element.fire, value: 2),
+        CardModel(element: Element.fire, value: 3),
+        CardModel(element: Element.fire, value: 10),
+    ]
+    var enemy1 = EnemyModel( name: "enemy_1", idleAnimations:  ["boss1","boss2","boss3","boss4","boss5","boss6","boss7"], hp: 10)
+    
+    
+    
+    
+    // Tutorial Steps
+    enum TutorialStep {
+        case selectCard
+        case firstAttack
+        case selectSecondCard
+        case discard
+        case selectThirdCard
+        case secondAttack
+    }
+    private var currentTutorialStep : TutorialStep = .selectCard
+    private var blackOverlay : SKSpriteNode!
+    
     private var discardPile: [CardModel] = []
     private var currentDeck: [CardModel] = []
     private let cardBackTexture = SKTexture(imageNamed: "back-card")
@@ -60,13 +89,14 @@ class NewGameScene: SKScene {
     private var backgroundMusicNode: SKAudioNode!
     
     // UI
-    private var background = SKSpriteNode(imageNamed: "")
+    private var background = SKSpriteNode(imageNamed: "environtment-bg")
     private let playerHp = SKSpriteNode(imageNamed: "player_hp")
     private let playerDiscard = SKSpriteNode(imageNamed: "player_discard")
 
     
     // MARK: - Lifecycle
     override func didMove(to view: SKView) {
+        setBlackOverlay()
         setGameRules()
         setBackgroundImage()
         initializeDeck()
@@ -98,13 +128,72 @@ class NewGameScene: SKScene {
     
     // MARK: UPDATE ON PLAYER PROGRESSION
     private func setGameRules() {
-        maxSelection = UserDefaults.standard.playerModel.elements.count
-        cardInHand = UserDefaults.standard.playerModel.elements.count + 2
+        maxSelection = 1
+        cardInHand = 3
 
     }
     
+    private func setBlackOverlay(){
+        blackOverlay = SKSpriteNode(color: .black, size: self.size)
+        blackOverlay.position = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
+        blackOverlay.alpha = 0.0
+        blackOverlay.zPosition = 20
+        blackOverlay.name = "blackOverlay"
+        blackOverlay.isUserInteractionEnabled = false
+        addChild(blackOverlay)
+        blackOverlay.isHidden = true
+    }
+    
+    func showBlackOverlay(duration: TimeInterval = 0.3) {
+        blackOverlay.isHidden = false // Ensure it's visible
+        blackOverlay.alpha = 0.0
+        blackOverlay.run(SKAction.fadeAlpha(to: 0.7, duration: duration))
+    }
+    
+    func hideBlackOverlay(duration: TimeInterval = 0.3) {
+        let fadeOut = SKAction.fadeOut(withDuration: duration)
+        let hide = SKAction.run { [self] in
+            self.blackOverlay.isHidden = true
+            self.blackOverlay.alpha = 0.6 // reset alpha for next show
+        }
+        blackOverlay.run(SKAction.sequence([fadeOut, hide]))
+    }
+    
+    private func updateTutorialStage(){
+        print("TUTORIAL : \(currentTutorialStep)")
+        switch currentTutorialStep {
+        case .selectCard: do {
+            playAreaCards.first!.zPosition = 100
+            showBlackOverlay()
+        }
+        case .firstAttack: do {
+            playAreaCards.first!.zPosition = 10
+            attackButton.zPosition = 100
+        }
+        case .selectSecondCard: do {
+            playAreaCards.first!.zPosition = 100
+            attackButton.zPosition = 10
+            showBlackOverlay()
+        }
+        case .discard: do {
+            playAreaCards.first!.zPosition = 10
+            discardButton.zPosition = 100
+        }
+        case .selectThirdCard: do {
+            showBlackOverlay()
+            playAreaCards.last!.zPosition = 100
+            discardButton.zPosition = 10
+
+        }
+        case .secondAttack: do {
+            playAreaCards.last!.zPosition = 10
+            attackButton.zPosition = 100
+        }
+            
+        }
+    }
+    
     private func setBackgroundImage() {
-        background = SKSpriteNode(imageNamed: stageInfo?.background ?? "")
         background.position = CGPoint(x: frame.size.width / 2, y: frame.size.height / 2)
         background.zPosition = -100
         background.scale(to: frame.size, width: true, multiplier: 1)
@@ -113,14 +202,7 @@ class NewGameScene: SKScene {
     
     // MARK: - Deck Management
     private func initializeDeck() {
-        deck.removeAll()
-        let elements = UserDefaults.standard.playerModel.elements
-        for element in elements {
-            for value in 1...10 {
-                deck.append(CardModel(element: element, value: value))
-            }
-        }
-        currentDeck = deck.shuffled()
+        currentDeck = deck
         updateDeckCount()
     }
 
@@ -233,9 +315,9 @@ class NewGameScene: SKScene {
     // MARK: – Boss Setup (using centerRect for slicing)
     private func setupBoss() {
         // 1) Usual boss sprite
-        bossSprite = SKSpriteNode(imageNamed: stageInfo?.enemy.idleAnimations.first ?? "")
-        bossHealth    = stageInfo?.enemy.hp ?? 0
-        bossMaxHealth = stageInfo?.enemy.hp ?? 0
+        bossSprite = SKSpriteNode(imageNamed:enemy1.idleAnimations.first ?? "")
+        bossHealth    = enemy1.hp
+        bossMaxHealth = enemy1.hp
         bossSprite.position = CGPoint(x: frame.midX, y: frame.height - 150)
         bossSprite.zPosition = -3
         bossSprite.scale(to: frame.size, width: false, multiplier: 0.5)
@@ -247,7 +329,7 @@ class NewGameScene: SKScene {
     private func startBossIdleAnimation() {
         var idleFrames: [SKTexture] = []
         let idleAtlas = SKTextureAtlas(named: "BossIdle")
-        stageInfo?.enemy.idleAnimations.forEach {
+        enemy1.idleAnimations.forEach {
             let textureName = $0
             let texture = idleAtlas.textureNamed(textureName)
             idleFrames.append(texture)
@@ -288,14 +370,14 @@ class NewGameScene: SKScene {
         
         comboBackground.position = CGPoint(x: 100, y: chancesLabel.position.y + 50)
         comboBackground.scale(to: frame.size, width: true, multiplier: 0.20)
-		comboBackground.zPosition = -1
+        comboBackground.zPosition = -1
         addChild(comboBackground)
         comboBackground.isHidden = true
         comboInfoLabel.text = ""
         comboInfoLabel.fontSize = 18
         comboInfoLabel.fontColor = UIColor(named: "CardTextColor")
         comboInfoLabel.horizontalAlignmentMode = .left
-		comboInfoLabel.position = CGPoint(x: 40, y: chancesLabel.position.y + 42)
+        comboInfoLabel.position = CGPoint(x: 40, y: chancesLabel.position.y + 42)
         addChild(comboInfoLabel)
     }
 
@@ -303,6 +385,72 @@ class NewGameScene: SKScene {
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
         let location = touch.location(in: self)
+        
+        switch currentTutorialStep {
+        case .selectCard: do {
+            if playAreaCards.first!.contains(location){
+                currentTutorialStep = .firstAttack
+                handleCardSelection(playAreaCards.first!)
+                updateTutorialStage()
+                return
+            } else{
+                return
+            }
+        }
+        case .firstAttack: do {
+            if attackButton.contains(location){
+                currentTutorialStep = .selectSecondCard
+                hideBlackOverlay()
+                run(clickSound)
+                handleAttack()
+                return
+            } else{
+                return
+            }
+        }
+        case .selectSecondCard: do {
+            if playAreaCards.first!.contains(location){
+                currentTutorialStep = .discard
+                handleCardSelection(playAreaCards.first!)
+                updateTutorialStage()
+                return
+            } else{
+                return
+            }
+        }
+        case .discard: do {
+            if discardButton.contains(location){
+                currentTutorialStep = .selectThirdCard
+                run(clickSound)
+                handleDiscard();
+                hideBlackOverlay()
+                return
+            } else {
+                return
+            }
+        }
+        case .selectThirdCard: do {
+            if playAreaCards.last!.contains(location){
+                currentTutorialStep = .secondAttack
+                handleCardSelection(playAreaCards.last!)
+                updateTutorialStage()
+                return
+            } else {
+                return
+            }
+
+        }
+        case .secondAttack: do {
+            if attackButton.contains(location){
+                hideBlackOverlay()
+                run(clickSound)
+                handleAttack()
+                return
+            } else{
+                return
+            }
+        }
+        }
         
         if childNode(withName: "restartWindow") != nil {
               // Block background interaction while popup is up
@@ -350,7 +498,7 @@ class NewGameScene: SKScene {
     func restartGame() {
         let scene = NewGameScene(size: self.frame.size)
         scene.scaleMode = .aspectFill
-        scene.stageInfo = self.stageInfo
+//        scene.stageInfo = self.stageInfo
         self.view?.presentScene(scene, transition: SKTransition.fade(withDuration: 0.5))
 
     }
@@ -426,6 +574,7 @@ class NewGameScene: SKScene {
         let stagingPositions = finalPositions.map { CGPoint(x: $0.x, y: $0.y + stagingOffset) }
 
         animateDrawing(from: stagingPositions, to: finalPositions, index: 0)
+        
     }
 
     private func animateDrawing(from stagingPositions: [CGPoint], to finalPositions: [CGPoint], index: Int) {
@@ -445,10 +594,10 @@ class NewGameScene: SKScene {
                     }
                 },
                 .wait(forDuration: moveDuration + 0.05),
-                .run { [weak self] in
-                    guard let self = self else { return }
-                    self.playAreaCards.forEach { self.addTemporaryGlow(to: $0) }
-                }
+                SKAction
+                    .run{ [weak self] in
+                        self?.updateTutorialStage()
+                    }
             ]))
             ; return
         }
@@ -476,6 +625,9 @@ class NewGameScene: SKScene {
                                 to: finalPositions,
                                 index: index + 1)
         }
+        
+        
+        
     }
     
     
@@ -500,20 +652,26 @@ class NewGameScene: SKScene {
                 }
                 playAreaCards.removeAll(where: { selectedCards.contains($0) })
                 selectedCards.removeAll()
-        animateReplacement(at: positions, remaining: positions.count,targetPositions : positions)
+        animateReplacement(at: positions, remaining: positions.count,targetPositions : positions){
+            self.updateTutorialStage()
+        }
     }
 
     private func replaceSelectedCards() {
        let positions = selectedCards.map { $0.originalPosition }
         playAreaCards.removeAll(where: { selectedCards.contains($0) })
         selectedCards.removeAll()
-        animateReplacement(at: positions, remaining: positions.count,targetPositions : positions)
+        animateReplacement(at: positions, remaining: positions.count,targetPositions : positions){
+            
+        }
     }
     
     private func replaceSelectedCardsAfterAttack() {
         let originalPosition = selectedCards.map { $0.originalPosition }
         let positions = selectedCards.map { $0.stagingPosition }
-        animateReplacement(at: originalPosition, remaining: positions.count,targetPositions: positions)
+        animateReplacement(at: originalPosition, remaining: positions.count,targetPositions: positions){
+            
+        }
     }
 
 //    private func animateReplacement(at positions: [CGPoint], remaining: Int) {
@@ -544,7 +702,7 @@ class NewGameScene: SKScene {
 //        }
 //    }
     
-    private func animateReplacement(at originalPositions: [CGPoint], remaining: Int,targetPositions: [CGPoint]) {
+    private func animateReplacement(at originalPositions: [CGPoint], remaining: Int,targetPositions: [CGPoint],completion: @escaping () -> Void) {
         var left = remaining
 
         for index in targetPositions.indices {
@@ -585,11 +743,15 @@ class NewGameScene: SKScene {
                 }
             }
         }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                completion()
+            }
     }
 
 
     // MARK: - Attack & Discard
-	private func shakeBackground(duration: TimeInterval = 0.6, amplitude: CGFloat = 15) {
+    private func shakeBackground(duration: TimeInterval = 0.6, amplitude: CGFloat = 15) {
         guard let cam = camera else { return }
         let originalPosition = cam.position
 
@@ -612,10 +774,10 @@ class NewGameScene: SKScene {
         actions.append(SKAction.move(to: originalPosition, duration: 0.02))
 
         cam.run(SKAction.sequence(actions))
-	}
+    }
 
     
-	
+    
     private func handleAttack() {
         guard !selectedCards.isEmpty else { return }
 
@@ -850,6 +1012,7 @@ class NewGameScene: SKScene {
         card.run(.group([move, flip])) {
             card.run(pop) { completion() }
         }
+        
     }
     
     // MARK: Temporary glow
@@ -998,6 +1161,7 @@ class NewGameScene: SKScene {
                 self.updateDeckCount()
                 self.updateButtonVisibility()
                 self.isAnimating = false
+                updateTutorialStage()
             }
 
         ]))
@@ -1031,23 +1195,23 @@ class NewGameScene: SKScene {
     
     
     private func gotoNextLevel() {
-        UserDefaults.standard.playerModel.currentStage += 1
-        
-        // All element is not unlocked
-        if(UserDefaults.standard.playerModel.elements.count != Element.allCases.count){
-            let gameScene = UnlockElementScene(size: self.view!.bounds.size)
-            gameScene.scaleMode = .aspectFill
-            // Tampilkan scene
-            self.view!.presentScene(gameScene,transition: SKTransition.fade(withDuration: 0.5))
-            return
-        }
-     
-        // Set game scene info
-        let gameScene = NewGameScene(size: self.view!.bounds.size)
-        gameScene.stageInfo = stages[UserDefaults.standard.playerModel.currentStage]
-        gameScene.scaleMode = .aspectFill
-        // Tampilkan scene
-        self.view!.presentScene(gameScene,transition: SKTransition.fade(withDuration: 0.5))
+//        UserDefaults.standard.playerModel.currentStage += 1
+//
+//        // All element is not unlocked
+//        if(UserDefaults.standard.playerModel.elements.count != Element.allCases.count){
+//            let gameScene = UnlockElementScene(size: self.view!.bounds.size)
+//            gameScene.scaleMode = .aspectFill
+//            // Tampilkan scene
+//            self.view!.presentScene(gameScene,transition: SKTransition.fade(withDuration: 0.5))
+//            return
+//        }
+//
+//        // Set game scene info
+//        let gameScene = NewGameScene(size: self.view!.bounds.size)
+//        gameScene.stageInfo = stages[UserDefaults.standard.playerModel.currentStage]
+//        gameScene.scaleMode = .aspectFill
+//        // Tampilkan scene
+//        self.view!.presentScene(gameScene,transition: SKTransition.fade(withDuration: 0.5))
     }
     
   
