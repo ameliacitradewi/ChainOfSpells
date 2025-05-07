@@ -54,6 +54,7 @@ class NewGameScene: SKScene {
     
     // MARK: – Sound Effects
     private let attackSound = SKAction.playSoundFileNamed("attack.mp3", waitForCompletion: false)
+    private let enemyAttackSound = SKAction.playSoundFileNamed("attack.mp3", waitForCompletion: false)
     private let clickSound = SKAction.playSoundFileNamed("button-click.mp3", waitForCompletion: false)
     private let cardDrawSound = SKAction.playSoundFileNamed("card-draw.mp3", waitForCompletion: false)
     private var backgroundMusicNode: SKAudioNode!
@@ -142,7 +143,7 @@ class NewGameScene: SKScene {
 
     // MARK: - Buttons Setup
     private func setupButtons() {
-        let buttonY: CGFloat = frame.midY - 40
+        let buttonY: CGFloat = frame.midY - 30
         attackButton.name = "attack"
         discardButton.name = "discard"
 
@@ -152,8 +153,8 @@ class NewGameScene: SKScene {
             button.isHidden = true
             addChild(button)
         }
-        attackButton.position = CGPoint(x: frame.midX - 50, y: buttonY)
-        discardButton.position = CGPoint(x: frame.midX + 50, y: buttonY)
+        attackButton.position = CGPoint(x: frame.midX - 40, y: buttonY)
+        discardButton.position = CGPoint(x: frame.midX + 40, y: buttonY)
     }
 
     // MARK: - Button Visibility
@@ -903,6 +904,7 @@ class NewGameScene: SKScene {
         let stagingPositions          = finalPositions.map { CGPoint(x: $0.x, y: $0.y + stagingOffset) }
 
         // Timings
+        let enemyAttackDelay: TimeInterval     = 1.5
         let moveDur: TimeInterval     = 0.5
         let buffer: TimeInterval      = 0.05
         let shakeDur: TimeInterval    = 0.6    // match your shakeBackground duration
@@ -939,21 +941,22 @@ class NewGameScene: SKScene {
                 self.replaceSelectedCardsAfterAttack()
                 
             },
-            .wait(forDuration: moveDur + buffer),
+            .wait(forDuration: enemyAttackDelay + buffer),
+            
+        
             
             
-            // 4) Replace played cards
-            .run { [weak self] in
-            },
-            .wait(forDuration: replacementDur + postReplaceBuffer),
-
+       
             // 2) Boss attack shake & decrement chance
             .run { [weak self] in
                 guard let self = self else { return }
-                cardAttackAnimation()
+                if(self.bossHealth <= 0) {
+                    return
+                }
                 self.shakeBackground(duration: shakeDur)
                 self.attackChances -= 1
                 self.chancesLabel.text = "x\(self.attackChances)"
+                run(enemyAttackSound)
                 if self.attackChances <= 0 && self.bossHealth > 0 {
                     showGameOver()
                 }
