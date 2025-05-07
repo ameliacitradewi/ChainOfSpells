@@ -833,23 +833,34 @@ class NewGameScene: SKScene {
     }
 
     private func animateCard(_ card: CardNode, to position: CGPoint, completion: @escaping () -> Void) {
-        let moveDuration: TimeInterval = 0.6
-        let half = moveDuration / 2
-        let flipDuration: TimeInterval = 0.3
-        let originalScale = card.xScale
+		let moveDuration: TimeInterval = 0.6
+		let half = moveDuration / 2
+		let flipDuration: TimeInterval = 0.3
+		let originalScale = card.xScale
 
-        let move = SKAction.move(to: position, duration: moveDuration)
-        let flip = SKAction.sequence([
-            .wait(forDuration: half - flipDuration/2),
-            .scaleX(to: 0, duration: flipDuration/2),
-            .run { card.texture = SKTexture(imageNamed: card.element.cardAsset); card.valueLabel.isHidden = false },
-            .scaleX(to: originalScale, duration: flipDuration/2)
-        ])
-        let pop = SKAction.sequence([.scale(to: originalScale * 1.1, duration: 0.1), .scale(to: originalScale, duration: 0.1)])
+		// Set initial small scale
+		card.setScale(originalScale * 0.4)
 
-        card.run(.group([move, flip])) {
-            card.run(pop) { completion() }
-        }
+		let move = SKAction.move(to: position, duration: moveDuration)
+
+		let scaleUp = SKAction.scale(to: originalScale, duration: moveDuration)
+			scaleUp.timingMode = .easeInEaseOut
+
+		let flip = SKAction.sequence([
+			.wait(forDuration: half - flipDuration/2),
+			.scaleX(to: 0, duration: flipDuration/2),
+			.run { card.texture = SKTexture(imageNamed: card.element.cardAsset); card.valueLabel.isHidden = false },
+			.scaleX(to: originalScale, duration: flipDuration/2)
+		])
+		let pop = SKAction.sequence([.scale(to: originalScale * 1.1, duration: 0.1), .scale(to: originalScale, duration: 0.1)])
+
+		//		// Group movement and scale animation
+		//		let moveAndScale = SKAction.group([move, scaleUp])
+		//
+		card.run(.group([move, flip])) {
+			card.run(pop) { completion() }
+		}
+
     }
     
     // MARK: Temporary glow
