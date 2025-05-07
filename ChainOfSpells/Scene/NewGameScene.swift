@@ -515,33 +515,6 @@ class NewGameScene: SKScene {
         animateReplacement(at: originalPosition, remaining: positions.count,targetPositions: positions)
     }
 
-//    private func animateReplacement(at positions: [CGPoint], remaining: Int) {
-//        var left = remaining
-//        for pos in positions {
-//            guard !currentDeck.isEmpty else {
-//                left -= 1
-//                if left == 0 { isAnimating = false; updateDeckCount() }
-//                continue
-//            }
-//            let def = currentDeck.removeFirst()
-//            updateDeckCount()
-//            let card = CardNode(texture: cardBackTexture)
-//            card.position = deckNode.position
-//            card.originalPosition = pos
-//            card.attackValue = def.value
-//            card.element = def.element
-//            card.valueLabel.text = "\(def.value)"
-//            card.valueLabel.isHidden = true
-//            scaleCard(card)
-//            addChild(card)
-//            playAreaCards.append(card)
-//
-//            animateCard(card, to: pos) {
-//                left -= 1
-//                if left == 0 { self.isAnimating = false }
-//            }
-//        }
-//    }
     
     private func animateReplacement(at originalPositions: [CGPoint], remaining: Int,targetPositions: [CGPoint]) {
         var left = remaining
@@ -618,10 +591,10 @@ class NewGameScene: SKScene {
     private func handleAttack() {
         guard !selectedCards.isEmpty else { return }
 
-        let base = selectedCards.reduce(0) { $0 + $1.attackValue }
-        let (name, mult) = evaluateCombo(for: selectedCards)
+        let (name, mult, comboCards) = evaluateCombo(for: selectedCards)
+        let base = comboCards.reduce(0) { $0 + $1.attackValue }
         let total = Int(Double(base) * mult)
-        print("Attack: \(name) ×\(mult) → Base = \(base), Damage = \(total)")
+        print("Attack: \(name) ×\(mult) → Combo Cards: \(comboCards.map { $0.attackValue }), Damage = \(total)")
         
         
         guard bossHealth > 0 else { return }
@@ -752,71 +725,97 @@ class NewGameScene: SKScene {
            ]))
     }
     
+    //MARK: New combo function
+    // MARK: - Evaluate Combo (returns combo name, multiplier, and relevant cards)
+    private func evaluateCombo(for cards: [CardNode]) -> (name: String, multiplier: Double, comboCards: [CardNode]) {
+        let allElements = cards.map { $0.element }
+        let allValues = cards.map { $0.attackValue }
+
+        // Check for the highest possible combo in descending order of priority (4 → 3 → 2)
+        // 4-card combos
+        if cards.count >= 4 {
+            for combo in combinations(of: cards, size: 4) {
+                let elements = combo.map { $0.element }
+                let elementCounts = Dictionary(grouping: elements, by: { $0 }).mapValues { $0.count }
+                if elementCounts.values.contains(4) {
+                    return ("Quad Spell", 2.5, combo)
+                }
+                if Set(elements).count == 4 && allValues.filter({ $0 == combo[0].attackValue }).count == 4 {
+                    return ("Harmony", 2.0, combo)
+                }
+            }
+        }
+
+        // 3-card combos
+        if cards.count >= 3 {
+            for combo in combinations(of: cards, size: 3) {
+                let elements = combo.map { $0.element }
+                let elementCounts = Dictionary(grouping: elements, by: { $0 }).mapValues { $0.count }
+                if elementCounts.values.contains(3) {
+                    return ("Triple Spell", 2.0, combo)
+                }
+                if Set(elements).count == 3 && combo.map({ $0.attackValue }).allEqual() {
+                    return ("Synergy", 2.2, combo)
+                }
+            }
+        }
+
+        // 2-card combos
+        if cards.count >= 2 {
+            for combo in combinations(of: cards, size: 2) {
+                let elements = combo.map { $0.element }
+                let values = combo.map { $0.attackValue }
+                
+                if elements[0] == elements[1] {
+                    return ("Double Spell", 1.5, combo)
+                }
+                
+                if values[0] == values[1] {
+                    return ("Double Spell", 1.5, combo)
+                }
+                let elementSet = Set(elements)
+                switch elementSet {
+                case [.fire, .water], [.water, .fire]: return ("Steam", 1.1, combo)
+                case [.earth, .wind], [.wind, .earth]: return ("Sandstorm", 1.1, combo)
+                case [.fire, .wind], [.wind, .fire]: return ("Heat", 1.2, combo)
+                case [.fire, .earth], [.earth, .fire]: return ("Lava", 1.2, combo)
+                case [.water, .wind], [.wind, .water]: return ("Storm", 1.2, combo)
+                case [.water, .earth], [.earth, .water]: return ("Nature", 1.2, combo)
+                default: break
+                }
+            }
+        }
+
+        // No combo found → Basic Spell (highest single card)
+        let highestCard = cards.max(by: { $0.attackValue < $1.attackValue })!
+        return ("Basic Spell", 1.0, [highestCard])
+    }
+
+    // Helper: Generate combinations of a specific size
+    private func combinations<T>(of array: [T], size: Int) -> [[T]] {
+        guard array.count >= size else { return [] }
+        guard size > 0 else { return [[]] }
+        
+        return array.indices.flatMap { index -> [[T]] in
+            let element = array[index]
+            let subArray = Array(array[(index + 1)...])
+            return combinations(of: subArray, size: size - 1).map { [element] + $0 }
+        }
+    }
+    
     // MARK: - Combo Info Update
     private func updateComboInfo() {
         guard !selectedCards.isEmpty else {
             comboInfoLabel.text = ""
             return
         }
-        let base = selectedCards.reduce(0) { $0 + $1.attackValue }
-        let (name, mult) = evaluateCombo(for: selectedCards)
-        let damage = Int(Double(base) * mult)
+        let (name, mult, comboCards) = evaluateCombo(for: selectedCards)
+        
+        // Convert sum to Double first, multiply, then cast to Int
+        let damage = Int(Double(comboCards.reduce(0) { $0 + $1.attackValue }) * mult)
+        
         comboInfoLabel.text = "\(name): \(damage)"
     }
-
-    // MARK: - Evaluate Combo
-    private func evaluateCombo(for cards: [CardNode]) -> (String, Double) {
-        let n = cards.count
-        let values = cards.map { $0.attackValue }
-        let elements = cards.map { $0.element }
-        let valueCounts = Dictionary(grouping: values, by: { $0 }).mapValues { $0.count }
-        let elementCounts = Dictionary(grouping: elements, by: { $0 }).mapValues { $0.count }
-        let isSameValue = valueCounts.values.contains(n)
-
-        switch n {
-        case 1:
-            return ("Basic Spell", 1.0)
-        case 2:
-            if isSameValue { return ("Double Spell", 1.5) }
-            let set = Set(elements)
-            switch set {
-            case Set([Element.fire,Element.water]): return ("Steam", 1.1)
-            case Set([Element.earth,Element.wind]): return ("Sandstorm", 1.1)
-            case Set([Element.fire,Element.wind]): return ("Heat", 1.2)
-            case Set([Element.fire,Element.earth]): return ("Lava", 1.2)
-            case Set([Element.water,Element.wind]): return ("Storm", 1.2)
-            case Set([Element.water,Element.earth]): return ("Nature", 1.2)
-            default: return ("Basic Spell", 1.0)
-            }
-        case 3:
-            if elementCounts.values.contains(3) { return ("Triple Spell", 2.0) }
-            if Set(elements).count == 3 && isSameValue { return ("Synergy", 2.2) }
-            return ("Basic Spell", 1.0)
-        case 4:
-            if elementCounts.values.contains(4) { return ("Quad Spell", 2.5) }
-            if Set(elements).count == 4 && isSameValue { return ("Harmony", 2.0) }
-            let doubles = elementCounts.filter { $0.value == 2 }.map { $0.key }
-            if doubles.count == 2 {
-                let combo = Set(doubles)
-                switch combo {
-                case Set([Element.fire,Element.water]): return ("Double Steam", 1.5)
-                case Set([Element.earth,Element.wind]): return ("Double Sandstorm", 1.5)
-                case Set([Element.fire,Element.wind]): return ("Double Heat", 2.0)
-                case Set([Element.fire,Element.earth]): return ("Double Lava", 2.0)
-                case Set([Element.water,Element.wind]): return ("Double Storm", 2.0)
-                case Set([Element.water,Element.earth]): return ("Double Nature", 2.0)
-                default: break
-                }
-            }
-            return ("Basic Spell", 1.0)
-        default:
-            return ("Basic Spell", 1.0)
-        }
-    }
-    
-    
-    
-
 
     private func scaleCard(_ card: SKSpriteNode) {
         card.scale(to: frame.size, width: false, multiplier: 0.25)
@@ -930,7 +929,7 @@ class NewGameScene: SKScene {
                 guard let self = self else { return }
                 cardAttackAnimation()
                 let base = selectedCards.reduce(0) { $0 + $1.attackValue }
-                let (name, mult) = evaluateCombo(for: selectedCards)
+                let (name, mult, comboCards) = evaluateCombo(for: selectedCards)
                 let total = Int(Double(base) * mult)
                 print("Attack: \(name) ×\(mult) → Base = \(base), Damage = \(total)")
                 run(attackSound)
@@ -1044,7 +1043,8 @@ class NewGameScene: SKScene {
 
     private func createBossFlashAction() -> SKAction {
         // hit effect colorize to white (full blend), then back to normal
-        let flashOn  = SKAction.colorize(with: UIColor(named: "HitEffectColor")!, colorBlendFactor: 1.0, duration: 0.25)
+//        let flashOn  = SKAction.colorize(with: UIColor(named: "HitEffectColor")!, colorBlendFactor: 1.0, duration: 0.25)
+        let flashOn  = SKAction.colorize(with: .red, colorBlendFactor: 1.0, duration: 0.25)
         let flashOff = SKAction.colorize(withColorBlendFactor: 0.0, duration: 0.25)
         return .sequence([flashOn, flashOff])
         
@@ -1052,3 +1052,10 @@ class NewGameScene: SKScene {
     }
 }
 
+// Helper: Check if all values in an array are equal
+extension Array where Element == Int {
+    func allEqual() -> Bool {
+        guard let first = self.first else { return true }
+        return allSatisfy { $0 == first }
+    }
+}
