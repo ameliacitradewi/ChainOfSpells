@@ -77,6 +77,73 @@ extension SKLabelNode {
         
         self.run(SKAction.sequence(actions), withKey: "typingEffect")
     }
+    
+    func typeStyledText(_ words: [StyledWord],
+                        parent: SKNode,
+                        startPosition: CGPoint,
+                        backgroundNode: SKSpriteNode? = nil,
+                        horizontalPadding: CGFloat = 20,
+                        verticalPadding: CGFloat = 10,
+                        characterDelay: TimeInterval = 0.02,
+                        completion: (() -> Void)? = nil) {
+        
+        parent.removeAllChildren()
+        
+        var currentX = startPosition.x
+        var totalDelay: TimeInterval = 0
+        var totalWidth: CGFloat = 0
+        
+        for word in words {
+            let label = SKLabelNode(fontNamed: fontName)
+            label.text = ""
+            label.fontColor = word.color
+            label.horizontalAlignmentMode = .left
+            label.verticalAlignmentMode = .center
+            label.position = CGPoint(x: currentX, y: startPosition.y)
+            
+            parent.addChild(label)
+            
+            // Estimate width for spacing & resizing
+            let estimatedWidth = CGFloat(word.text.count) * 12
+            totalWidth += estimatedWidth
+            
+            // Typing action
+            let characters = Array(word.text)
+            var actions: [SKAction] = []
+            
+            for char in characters {
+                let addChar = SKAction.run {
+                    label.text? += String(char)
+                    
+                    if let bg = backgroundNode {
+                        let labelBounds = parent.calculateAccumulatedFrame()
+                        let newWidth = labelBounds.width + horizontalPadding
+                        let newHeight = labelBounds.height + verticalPadding
+                        let resize = SKAction.resize(toWidth: newWidth, duration: 0.05)
+                        bg.run(resize)
+                    }
+                }
+                let wait = SKAction.wait(forDuration: characterDelay)
+                actions.append(SKAction.sequence([addChar, wait]))
+            }
+            
+            // Schedule with total delay
+            label.run(SKAction.sequence([
+                SKAction.wait(forDuration: totalDelay),
+                SKAction.sequence(actions)
+            ]))
+            
+            totalDelay += characterDelay * Double(characters.count)
+            currentX += estimatedWidth + 6  // spacing between words
+        }
+        
+        if let completion = completion {
+            parent.run(SKAction.sequence([
+                SKAction.wait(forDuration: totalDelay + 0.1),
+                SKAction.run(completion)
+            ]))
+        }
+    }
 
 
        /// Instantly completes the typing effect and shows full text.

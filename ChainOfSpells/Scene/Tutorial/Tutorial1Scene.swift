@@ -47,10 +47,12 @@ class Tutorial1Scene: SKScene {
     private var currentTutorialStep : TutorialStep = .showEnemy
     private var blackOverlay : SKSpriteNode!
     
-    // tutorial dialog
-    private let dialogBackground = SKSpriteNode(imageNamed: "combo-bg")
-    private let dialogLabel = SKLabelNode(fontNamed: fontName)
+    // Tutorial Information
+    private let tooltipBackground = SKSpriteNode(imageNamed: "combo-bg")
+    private let toolTipLabel = SKLabelNode(fontNamed: fontName)
     private let characterSprite = SKSpriteNode(texture: SKTexture(imageNamed: "character"))
+    private let dialogBackground = SKSpriteNode(imageNamed: "dialog_box")
+    private let dialogLabel = SKLabelNode(fontNamed: fontName)
 
     
     private var discardPile: [CardModel] = []
@@ -107,7 +109,7 @@ class Tutorial1Scene: SKScene {
     
     // MARK: - Lifecycle
     override func didMove(to view: SKView) {
-        setDialog()
+        setToolTipAndDialog()
         setBlackOverlay()
         setGameRules()
         setBackgroundImage()
@@ -136,22 +138,22 @@ class Tutorial1Scene: SKScene {
         }
     }
     
-    private func setDialog() {
-        dialogBackground.size.width = self.size.width * 0.8
-        dialogBackground.size.height = self.size.height * 0.1
-        dialogBackground.zPosition = 102
-        dialogBackground.name = "dialogBackground"
-        dialogLabel.fontSize = 12
-        dialogLabel.fontColor = .white
-        dialogLabel.zPosition = 103
-        dialogLabel.horizontalAlignmentMode = .center
-        dialogLabel.verticalAlignmentMode = .center
-        dialogLabel.position = .zero
+    private func setToolTipAndDialog() {
+        tooltipBackground.size.width = self.size.width * 0.8
+        tooltipBackground.size.height = self.size.height * 0.1
+        tooltipBackground.zPosition = 102
+        tooltipBackground.name = "dialogBackground"
+        toolTipLabel.fontSize = 12
+        toolTipLabel.fontColor = .white
+        toolTipLabel.zPosition = 103
+        toolTipLabel.horizontalAlignmentMode = .center
+        toolTipLabel.verticalAlignmentMode = .center
+        toolTipLabel.position = .zero
         
-        dialogBackground.position = CGPoint(x: frame.midX, y: frame.midY)
-        dialogBackground.addChild(dialogLabel)
-        addChild(dialogBackground)
-        dialogBackground.isHidden = true
+        tooltipBackground.position = CGPoint(x: frame.midX, y: frame.midY)
+        tooltipBackground.addChild(toolTipLabel)
+        addChild(tooltipBackground)
+        tooltipBackground.isHidden = true
         
         // set character
         characterSprite.scale(to: frame.size, width: false, multiplier: 1)
@@ -159,6 +161,22 @@ class Tutorial1Scene: SKScene {
         characterSprite.position = CGPoint(x: 100, y: frame.midY)
         addChild(characterSprite)
         characterSprite.isHidden = true
+        
+        // set dialog
+        dialogBackground.size.width = self.size.width * 0.75
+        dialogBackground.size.height = self.size.height * 0.3
+        dialogBackground.position = CGPoint(x: frame.midX + 50 , y: frame.minY + 100)
+        dialogBackground.zPosition = 102
+        dialogLabel.fontSize = 12
+        dialogLabel.fontColor = .white
+        dialogLabel.zPosition = 103
+        dialogLabel.horizontalAlignmentMode = .center
+        dialogLabel.verticalAlignmentMode = .center
+        dialogLabel.position = .zero
+        dialogBackground.addChild(dialogLabel)
+
+        addChild(dialogBackground)
+        dialogBackground.isHidden = true
     }
     
   
@@ -195,18 +213,18 @@ class Tutorial1Scene: SKScene {
         }
         blackOverlay.run(SKAction.sequence([fadeOut, hide]))
         characterSprite.isHidden = true
-        dialogBackground.isHidden = true
+        tooltipBackground.isHidden = true
     }
     
     private func updateTutorialStage(){
         print("TUTORIAL : \(currentTutorialStep)")
         switch currentTutorialStep {
         case .showEnemy: do {
-            dialogBackground.isHidden = false
-            dialogBackground.position = CGPoint(x: bossSprite.position.x, y: bossSprite.position.y - 120)
-            dialogLabel.typeText(
-                "Ini musuh dan healthbarnya",
-                backgroundNode: dialogBackground,
+            tooltipBackground.isHidden = false
+            tooltipBackground.position = CGPoint(x: bossSprite.position.x, y: bossSprite.position.y - 120)
+            toolTipLabel.typeText(
+                "I have to defeat this enemy so I can continue my journey",
+                backgroundNode: tooltipBackground,
                 horizontalPadding: 100,
                     verticalPadding: 20
             )
@@ -220,10 +238,10 @@ class Tutorial1Scene: SKScene {
             bossSprite.zPosition = 1
             bossHealthBar.zPosition = 10
             playAreaCards.forEach { $0.zPosition = 100 }
-            dialogBackground.position = CGPoint(x: playAreaCards[1].position.x, y: playAreaCards[1].position.y  + 80)
-            dialogLabel.typeText(
-                "Ini kartu ku",
-                backgroundNode: dialogBackground,
+            tooltipBackground.position = CGPoint(x: playAreaCards[1].position.x, y: playAreaCards[1].position.y  + 80)
+            toolTipLabel.typeText(
+                "Right now I only have fire spell, but it should be enough.",
+                backgroundNode: tooltipBackground,
                 horizontalPadding: 100,
                     verticalPadding: 20
             )
@@ -233,10 +251,10 @@ class Tutorial1Scene: SKScene {
             playAreaCards.forEach { $0.zPosition = 10 }
             playAreaCards.first!.zPosition = 100
             showBlackOverlay()
-            dialogBackground.position = CGPoint(x: playAreaCards[0].position.x, y: playAreaCards[0].position.y + 60)
-            dialogLabel.typeText(
-                "pilih kartu 5",
-                backgroundNode: dialogBackground,
+            tooltipBackground.position = CGPoint(x: playAreaCards[0].position.x, y: playAreaCards[0].position.y + 60)
+            toolTipLabel.typeText(
+                "This card should deal the most damage. Lets use it.",
+                backgroundNode: tooltipBackground,
                 horizontalPadding: 100,
                     verticalPadding: 20
             )
@@ -244,10 +262,10 @@ class Tutorial1Scene: SKScene {
         case .firstAttack: do {
             playAreaCards.first!.zPosition = 10
             attackButton.zPosition = 100
-            dialogBackground.position = CGPoint(x: attackButton.position.x, y: attackButton.position.y + 50)
-            dialogLabel.typeText(
-                "klik attack",
-                backgroundNode: dialogBackground,
+            tooltipBackground.position = CGPoint(x: attackButton.position.x, y: attackButton.position.y + 80)
+            toolTipLabel.typeText(
+                "Time to attack!",
+                backgroundNode: tooltipBackground,
                 horizontalPadding: 100,
                     verticalPadding: 20
             )
@@ -256,14 +274,14 @@ class Tutorial1Scene: SKScene {
             playerHp.zPosition = 100
             chancesLabel.zPosition = 100
             showBlackOverlay()
-            dialogBackground.isHidden = false
+            tooltipBackground.isHidden = false
             characterSprite.isHidden = false
             characterSprite.position = CGPoint(x:frame.maxX - 200,y : frame.midY)
-            dialogBackground.position = CGPoint(x: playerHp.position.x + 20, y: playerHp.position.y + 30)
-            dialogLabel.typeText(
-                "sakit bang",
-                backgroundNode: dialogBackground,
-                horizontalPadding: 100,
+            tooltipBackground.position = CGPoint(x: playerHp.position.x + 200, y: playerHp.position.y + 30)
+            toolTipLabel.typeText(
+                "Ouch! I take some damage. If my health goes below zero I will be defeated.",
+                backgroundNode: tooltipBackground,
+                horizontalPadding: 140,
                     verticalPadding: 20
             )
         }
@@ -273,24 +291,24 @@ class Tutorial1Scene: SKScene {
             playAreaCards.first!.zPosition = 100
             attackButton.zPosition = 10
             showBlackOverlay()
-            dialogLabel.typeText(
-                "kartu nya jelek anjr",
-                backgroundNode: dialogBackground,
+            toolTipLabel.typeText(
+                "None of this cards are good enough. I need to discard one.",
+                backgroundNode: tooltipBackground,
                 horizontalPadding: 100,
                     verticalPadding: 20
             )
             showBlackOverlay()
-            dialogBackground.position = CGPoint(x: playAreaCards[0].position.x, y: playAreaCards[0].position.y + 60)
+            tooltipBackground.position = CGPoint(x: playAreaCards[0].position.x, y: playAreaCards[0].position.y + 60)
             characterSprite.position = CGPoint(x: 100, y: frame.midY)
 
         }
         case .discard: do {
             playAreaCards.first!.zPosition = 10
             discardButton.zPosition = 100
-            dialogBackground.position = CGPoint(x: discardButton.position.x, y: attackButton.position.y + 50)
-            dialogLabel.typeText(
-                "discard lah",
-                backgroundNode: dialogBackground,
+            tooltipBackground.position = CGPoint(x: discardButton.position.x, y: attackButton.position.y + 50)
+            toolTipLabel.typeText(
+                "Lets discard one",
+                backgroundNode: tooltipBackground,
                 horizontalPadding: 100,
                     verticalPadding: 20
             )
@@ -300,14 +318,14 @@ class Tutorial1Scene: SKScene {
             discardButton.zPosition = 10
             discardLeftLabel.zPosition = 100
             playerDiscard.zPosition = 100
-            dialogBackground.isHidden = false
+            tooltipBackground.isHidden = false
             characterSprite.isHidden = false
             characterSprite.position = CGPoint(x:frame.maxX - 200,y : frame.midY)
-            dialogBackground.position = CGPoint(x: playerDiscard.position.x + 60, y: playerDiscard.position.y + 30)
-            dialogLabel.typeText(
-                "discard berkurang",
-                backgroundNode: dialogBackground,
-                horizontalPadding: 100,
+            tooltipBackground.position = CGPoint(x: playerDiscard.position.x + 250, y: playerDiscard.position.y + 30)
+            toolTipLabel.typeText(
+                "Discarding a card takes some energy. I can replenish it again by the time my next attack starts.",
+                backgroundNode: tooltipBackground,
+                horizontalPadding: 160,
                     verticalPadding: 20
             )
         }
@@ -316,23 +334,23 @@ class Tutorial1Scene: SKScene {
             playerDiscard.zPosition = 10
             playAreaCards.last!.zPosition = 100
             discardButton.zPosition = 10
-            dialogLabel.typeText(
-                "pilih kartu 10",
-                backgroundNode: dialogBackground,
+            toolTipLabel.typeText(
+                "This card should be enough to defeat the enemy!",
+                backgroundNode: tooltipBackground,
                 horizontalPadding: 100,
                     verticalPadding: 20
             )
-            dialogBackground.position = CGPoint(x: playAreaCards.last!.position.x, y: playAreaCards.last!.position.y + 60)
+            tooltipBackground.position = CGPoint(x: playAreaCards.last!.position.x, y: playAreaCards.last!.position.y + 60)
             characterSprite.position = CGPoint(x: 100, y: frame.midY)
 
         }
         case .secondAttack: do {
             playAreaCards.last!.zPosition = 10
             attackButton.zPosition = 100
-            dialogBackground.position = CGPoint(x: attackButton.position.x, y: attackButton.position.y + 50)
-            dialogLabel.typeText(
-                "gas serang",
-                backgroundNode: dialogBackground,
+            tooltipBackground.position = CGPoint(x: attackButton.position.x, y: attackButton.position.y + 80)
+            toolTipLabel.typeText(
+                "Time to finish this!",
+                backgroundNode: tooltipBackground,
                 horizontalPadding: 100,
                     verticalPadding: 20
             )
@@ -495,6 +513,7 @@ class Tutorial1Scene: SKScene {
 
 
     // MARK: - Labels Setup
+    // MARK: - Labels Setup
     private func setupLabels() {
         chancesLabel.text = "x\(attackChances)"
         chancesLabel.fontSize = 24
@@ -517,19 +536,20 @@ class Tutorial1Scene: SKScene {
         addChild(playerDiscard)
         addChild(discardLeftLabel)
         
-        comboBackground.position = CGPoint(x: 100, y: chancesLabel.position.y + 50)
+        comboBackground.position =  CGPoint(x: frame.midX, y: attackButton.position.y + 40)
         comboBackground.scale(to: frame.size, width: true, multiplier: 0.20)
         comboBackground.zPosition = -1
         addChild(comboBackground)
         comboBackground.isHidden = true
+        comboBackground.zPosition = 14
+        comboInfoLabel.zPosition = 15
         comboInfoLabel.text = ""
         comboInfoLabel.fontSize = 18
         comboInfoLabel.fontColor = UIColor(named: "CardTextColor")
-        comboInfoLabel.horizontalAlignmentMode = .left
-        comboInfoLabel.position = CGPoint(x: 40, y: chancesLabel.position.y + 42)
+//        comboInfoLabel.horizontalAlignmentMode = .left
+        comboInfoLabel.position = CGPoint(x: comboBackground.position.x, y: comboBackground.position.y - 5)
         addChild(comboInfoLabel)
     }
-
     // MARK: - Touch Handling
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
@@ -1368,6 +1388,13 @@ class Tutorial1Scene: SKScene {
     
     
     private func gotoNextLevel() {
+        showBlackOverlay()
+        victoryLabel.isHidden = true
+        characterSprite.isHidden = false
+        dialogBackground.isHidden = false
+        dialogLabel.typeText("Easy Victory bro")
+//        dialogBackground.typeTextWithLineBreaks("Selamat! Anda telah memenuhi semua level ini.\nKami menghargai kerja keras Anda.\nKlik untuk melanjutkan.") {
+//        }
 //        UserDefaults.standard.playerModel.currentStage += 1
 //        
 //        // All element is not unlocked
