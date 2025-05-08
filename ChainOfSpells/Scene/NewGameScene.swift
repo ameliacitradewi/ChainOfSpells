@@ -286,7 +286,7 @@ class NewGameScene: SKScene {
         addChild(playerDiscard)
         addChild(discardLeftLabel)
         
-        comboBackground.position = CGPoint(x: 100, y: chancesLabel.position.y + 50)
+		comboBackground.position =  CGPoint(x: frame.midX, y: attackButton.position.y + 40)
         comboBackground.scale(to: frame.size, width: true, multiplier: 0.20)
 		comboBackground.zPosition = -1
         addChild(comboBackground)
@@ -294,8 +294,8 @@ class NewGameScene: SKScene {
         comboInfoLabel.text = ""
         comboInfoLabel.fontSize = 18
         comboInfoLabel.fontColor = UIColor(named: "CardTextColor")
-        comboInfoLabel.horizontalAlignmentMode = .left
-		comboInfoLabel.position = CGPoint(x: 40, y: chancesLabel.position.y + 42)
+//        comboInfoLabel.horizontalAlignmentMode = .left
+		comboInfoLabel.position = CGPoint(x: comboBackground.position.x, y: comboBackground.position.y - 5)
         addChild(comboInfoLabel)
     }
 
