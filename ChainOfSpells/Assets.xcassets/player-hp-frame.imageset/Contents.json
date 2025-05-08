@@ -1,7 +1,7 @@
 {
   "images" : [
     {
-      "filename" : "card_creature_unicorn.png",
+      "filename" : "player-hp-frame.png",
       "idiom" : "universal",
       "scale" : "1x"
     },

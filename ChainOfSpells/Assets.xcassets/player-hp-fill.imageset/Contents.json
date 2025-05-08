@@ -1,7 +1,7 @@
 {
   "images" : [
     {
-      "filename" : "attack_button.png",
+      "filename" : "player-hp-fill.png",
       "idiom" : "universal",
       "scale" : "1x"
     },

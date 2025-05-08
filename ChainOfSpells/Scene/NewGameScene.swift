@@ -41,11 +41,18 @@ class NewGameScene: SKScene {
     // MARK: Player Progression
     private var maxSelection = 1
     private var cardInHand = 3
+	
+	// MARK: Player Properties
+    private var playerHp = 10
+    private var playerMaxHp = 10
+	private var playerDamageTaken: Int = 0
+	
+	private let momentumLabel = SKLabelNode(fontNamed: fontName)
+    private let momentumMultiplierLabel = SKLabelNode(fontNamed: fontName)
 
     // MARK: Labels & State
     private let victoryLabel = SKLabelNode(fontNamed: fontName)
-    private var playerHp = 10
-    private var playerMaxHp = 10
+   
 
     private let playerHpLabel = SKLabelNode(fontNamed: fontName)
     private var discardLeft = 3
@@ -67,13 +74,15 @@ class NewGameScene: SKScene {
     private let playerHpNode = SKSpriteNode(imageNamed: "player_hp")
     private let playerDiscard = SKSpriteNode(imageNamed: "player_discard")
     private let statusLabel = SKLabelNode(fontNamed: fontName)
+    private let momentumBar = SKSpriteNode(imageNamed: "player-hp")
+
 
     // Chain Effect
     private var playerChainEffects : [ChainEffectModel] = []
     private var enemyChainEffect : ChainEffectModel?
     // Add momentum variables
     private var momentum: Int = 0
-    private var momentumMultiplier: Int = 0
+    private var momentumMultiplier: Int = 1
     private var lastMomentumElement: Element? = nil
     
     //rework attack
@@ -282,24 +291,50 @@ class NewGameScene: SKScene {
 
     // MARK: - Labels Setup
     private func setupLabels() {
+        // Health
         playerHpLabel.text = "\(playerHp)/\(playerMaxHp)"
-        playerHpLabel.fontSize = 24
+        playerHpLabel.fontSize = 18
         playerHpLabel.fontColor = .white
         playerHpLabel.horizontalAlignmentMode = .left
-        playerHpLabel.position = CGPoint(x: 70, y: frame.height/2 - 130)
-        playerHpNode.position = CGPoint(x: 50, y: frame.height/2 - 120)
+        playerHpLabel.position = CGPoint(x: 30, y: frame.midY - 180)
+        playerHpNode.position = CGPoint(x: 50, y: frame.minY + 90)
         playerHpNode.scale(to: frame.size, width: false, multiplier: 0.1)
         addChild(playerHpLabel)
         addChild(playerHpNode)
+		
+		
+	
+		
+		// Momentum Bar
+        momentumLabel.text = "\(momentum)"
+		momentumLabel.fontSize = 18
+		momentumLabel.fontColor = .white
+		momentumLabel.horizontalAlignmentMode = .center
+		momentumLabel.position = CGPoint(x: 100, y: frame.midY - 180)
         
+        momentumMultiplierLabel.text = "x\(momentumMultiplier)"
+        momentumMultiplierLabel.fontSize = 18
+        momentumMultiplierLabel.fontColor = .white
+        momentumMultiplierLabel.horizontalAlignmentMode = .center
+		
+		momentumBar.position = CGPoint(x: 100, y: frame.minY + 90)
+        momentumMultiplierLabel.position = CGPoint(x: momentumBar.position.x, y: momentumBar.position.y + 60)
+		momentumBar.scale(to: frame.size, width: false, multiplier: 0.30)
+		addChild(momentumLabel)
+		addChild(momentumBar)
+        addChild(momentumMultiplierLabel)
+
         // Discard left label below chances
-        discardLeftLabel.text = "x\(discardLeft)"
-        discardLeftLabel.fontSize = 24
+        discardLeftLabel.text = "\(discardLeft)"
+        discardLeftLabel.fontSize = 18
         discardLeftLabel.fontColor = .white
         discardLeftLabel.horizontalAlignmentMode = .left
         discardLeftLabel.position = CGPoint(x: 70, y: playerHpLabel.position.y - 40)
-        playerDiscard.position = CGPoint(x: 50, y: playerHpLabel.position.y - 30)
         playerDiscard.scale(to: frame.size, width: false, multiplier: 0.1)
+		discardLeftLabel.horizontalAlignmentMode = .center
+        discardLeftLabel.position = CGPoint(x: 150, y: frame.midY - 180)
+		
+		playerDiscard.position = CGPoint(x: 150, y: frame.minY + 90)
         addChild(playerDiscard)
         addChild(discardLeftLabel)
         
@@ -336,6 +371,27 @@ class NewGameScene: SKScene {
               // Block background interaction while popup is up
               return
           }
+		
+		if deckNode.contains(location) && !isAnimating {
+			run(clickSound)
+			showSpellbookOverlay()
+			return
+		}
+		
+		func showSpellbookOverlay() {
+			guard childNode(withName: "spellbookOverlay") == nil else { return }
+
+			let dim = SKSpriteNode(color: UIColor.black.withAlphaComponent(0.5), size: self.size)
+			dim.name = "spellbookOverlay"
+			dim.zPosition = 250
+			dim.position = CGPoint(x: size.width / 2, y: size.height / 2)
+			addChild(dim)
+
+			let bookNode = SpellsBook(size: self.size, elements: UserDefaults.standard.playerModel.elements)
+			bookNode.zPosition = 251
+			addChild(bookNode)
+		}
+
 
         if !selectedCards.isEmpty {
             if attackButton.contains(location) {
@@ -371,6 +427,12 @@ class NewGameScene: SKScene {
             // Ignore all other touches while popup is visible
             return
         }
+		
+		if node.name == "closeSpellbook" {
+			childNode(withName: "spellbookOverlay")?.removeFromParent()
+			node.parent?.parent?.removeFromParent() // remove SpellsBook node
+			return
+		}
 
         // Your regular gameplay touch logic here
     }
@@ -652,17 +714,21 @@ class NewGameScene: SKScene {
             else {
                 // DIFFERENT ELEMENT - Reset to 0
                 momentum = 0
+                momentumMultiplier = 1
             }
             
             lastMomentumElement = currentElement
         } else {
             momentum = 0
+            momentumMultiplier = 1
             lastMomentumElement = nil
         }
         
         
         print("Current Momentum: \(momentum)")
-        
+        momentumLabel.text = "\(momentum)"
+        momentumMultiplierLabel.text = "x\(momentumMultiplier)"
+
         let levelsGained = momentum / 100
         if levelsGained > 0 {
             momentumMultiplier += levelsGained
@@ -670,7 +736,7 @@ class NewGameScene: SKScene {
             print("Momentum Multiplier: \(momentumMultiplier)")
         }
         
-        currentAttackDamage = Int(Double(base) * mult * (1 + Double(momentumMultiplier)))
+        currentAttackDamage = Int(Double(base) * mult * (Double(momentumMultiplier)))
         print("Attack: \(name) ×\(mult) → Combo Cards: \(comboCards.map { $0.attackValue }), Damage = \(currentAttackDamage)")
         
         // Player Chain Effect Calculation
@@ -1205,7 +1271,7 @@ class NewGameScene: SKScene {
             
             
        
-            // 2) Boss attack shake & decrement chance
+            // MARK: 2) Boss attack shake & decrement chance
             .run { [weak self] in
                 guard let self = self else { return }
                 if(self.bossHealth <= 0) {
