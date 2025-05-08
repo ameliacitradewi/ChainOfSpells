@@ -331,6 +331,27 @@ class NewGameScene: SKScene {
               // Block background interaction while popup is up
               return
           }
+		
+		if deckNode.contains(location) && !isAnimating {
+			run(clickSound)
+			showSpellbookOverlay()
+			return
+		}
+		
+		func showSpellbookOverlay() {
+			guard childNode(withName: "spellbookOverlay") == nil else { return }
+
+			let dim = SKSpriteNode(color: UIColor.black.withAlphaComponent(0.5), size: self.size)
+			dim.name = "spellbookOverlay"
+			dim.zPosition = 250
+			dim.position = CGPoint(x: size.width / 2, y: size.height / 2)
+			addChild(dim)
+
+			let bookNode = SpellsBook(size: self.size, elements: UserDefaults.standard.playerModel.elements)
+			bookNode.zPosition = 251
+			addChild(bookNode)
+		}
+
 
         if !selectedCards.isEmpty {
             if attackButton.contains(location) {
@@ -366,6 +387,12 @@ class NewGameScene: SKScene {
             // Ignore all other touches while popup is visible
             return
         }
+		
+		if node.name == "closeSpellbook" {
+			childNode(withName: "spellbookOverlay")?.removeFromParent()
+			node.parent?.parent?.removeFromParent() // remove SpellsBook node
+			return
+		}
 
         // Your regular gameplay touch logic here
     }
