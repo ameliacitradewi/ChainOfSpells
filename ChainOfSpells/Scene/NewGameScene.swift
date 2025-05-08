@@ -126,6 +126,7 @@ class NewGameScene: SKScene {
     private func setGameRules() {
         maxSelection = UserDefaults.standard.playerModel.elements.count
         cardInHand = UserDefaults.standard.playerModel.elements.count + 2
+        playerChainEffects = []
 
     }
     
@@ -366,7 +367,6 @@ class NewGameScene: SKScene {
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
         let location = touch.location(in: self)
-        
         if childNode(withName: "restartWindow") != nil {
               // Block background interaction while popup is up
               return
@@ -1202,12 +1202,69 @@ class NewGameScene: SKScene {
     
     // Enemy Attack
     private func enemyAttack() {
-        let attackValue = Int.random(in: 10...30)
-        let damage : Double = Double(playerMaxHp) * Double(attackValue) / 100
+        let attackValue = Int.random(in: 20...40)
+        var damage : Double = Double(playerMaxHp) * Double(attackValue) / 100
         print("ATTACK VALUE : \(attackValue)")
         print("DAMAGE VALUE : \(damage)")
+        // Check if Dodge
+        if let mistChainEffect = playerChainEffects.first(where: { $0.type == .mist }) {
+            switch mistChainEffect.level {
+                
+            case .base: do {
+                let randomNumber = Int.random(in: 1...100)
+                switch randomNumber {
+                case 1...20: do {
+                    statusLabel.text = "MISS!"
+                    statusLabel.run(.sequence([.unhide(), .scale(to: 1.2, duration: 0.5), .scale(to: 0.9, duration: 0.2), .scale(to: 1.0, duration: 0.2),.hide()]))
+                    damage = 0
+                }
+                default:
+                    break
+                }
+            }
+            case .strong: do {
+                let randomNumber = Int.random(in: 1...100)
+                switch randomNumber {
+                case 1...40: do {
+                    statusLabel.text = "MISS!"
+                    statusLabel.run(.sequence([.unhide(), .scale(to: 1.2, duration: 0.5), .scale(to: 0.9, duration: 0.2), .scale(to: 1.0, duration: 0.2),.hide()]))
+                    damage = 0
+                }
+                default:
+                    break
+                }
+            }
+            case .enemy: do {
+                let randomNumber = Int.random(in: 1...100)
+                switch randomNumber {
+                case 1...20: do {
+                    statusLabel.text = "MISS!"
+                    statusLabel.run(.sequence([.unhide(), .scale(to: 1.2, duration: 0.5), .scale(to: 0.9, duration: 0.2), .scale(to: 1.0, duration: 0.2),.hide()]))
+                    damage = 0
+                }
+                default:
+                    break
+                }
+            }
+            }
+        }
         
-        
+        // Check if damage reduction
+        if let mistChainEffect = playerChainEffects.first(where: { $0.type == .damageReduction }) {
+            switch mistChainEffect.level {
+                
+            case .base: do {
+                damage *= 0.8
+            }
+            case .strong: do {
+                damage *= 0.5
+
+            }
+            case .enemy: do {
+                damage *= 0.8
+            }
+            }
+        }
         
         playerHp = playerHp - Int(damage)
     }
@@ -1230,6 +1287,7 @@ class NewGameScene: SKScene {
         let shakeDur: TimeInterval    = 0.6    // match your shakeBackground duration
         let replacementDur: TimeInterval = 0.8
         let postReplaceBuffer: TimeInterval = 0.1
+        var burnTimer: TimeInterval = 0
 
         run(.sequence([
 
@@ -1266,8 +1324,34 @@ class NewGameScene: SKScene {
             },
             .wait(forDuration: enemyAttackDelay + buffer),
             
-        
-            
+           .run { [weak self] in
+                    guard let self = self else { return }
+               if self.bossHealth <= 0 {
+                   return
+               }
+               if let burnChainEffect = playerChainEffects.first(where: { $0.type == .burn }) {
+                   switch burnChainEffect.level {
+                       
+                   case .base: do {
+                       let burnDamage : Double = Double(bossMaxHealth) * 0.1
+                       updateBossHealth(damage: Int(burnDamage))
+                   }
+                   case .strong: do {
+                       let burnDamage : Double = Double(bossMaxHealth) * 0.2
+                       updateBossHealth(damage: Int(burnDamage))
+                   }
+                   case .enemy: do {
+                       let burnDamage : Double = Double(bossMaxHealth) * 0.1
+                       updateBossHealth(damage: Int(burnDamage))
+                   }
+                   }
+                   
+                   statusLabel.isHidden = false
+                   statusLabel.text = "BURN!"
+                   statusLabel.run(.sequence([.unhide(), .scale(to: 1.2, duration: 0.2), .scale(to: 0.9, duration: 0.2), .scale(to: 1.0, duration: 0.2),.hide()]))
+               }
+           },
+
             
        
             // MARK: 2) Boss attack shake & decrement chance
