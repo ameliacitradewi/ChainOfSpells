@@ -35,7 +35,10 @@ class NewGameScene: SKScene {
     private var bossSprite = SKSpriteNode(imageNamed: "boss")
     private var bossHealth: Int = 10
     private var bossMaxHealth: Int = 10
-    private var bossHealthBar = SKNode()
+    private var bossHealthBar: SKSpriteNode!
+    private var fullTexture: SKTexture!
+    private let fullBarWidth: CGFloat = 200
+    private let barHeight: CGFloat   = 30
     private var bossHealthLabel = SKLabelNode()
     
     // MARK: Player Progression
@@ -76,7 +79,6 @@ class NewGameScene: SKScene {
     private let statusLabel = SKLabelNode(fontNamed: fontName)
     private let momentumBar = SKSpriteNode(imageNamed: "player-hp")
 
-
     // Chain Effect
     private var playerChainEffects : [ChainEffectModel] = []
     private var enemyChainEffect : ChainEffectModel?
@@ -87,9 +89,6 @@ class NewGameScene: SKScene {
     
     //rework attack
     private var currentAttackDamage: Int = 0
-    
-    
-
     
     // MARK: - Lifecycle
     override func didMove(to view: SKView) {
@@ -203,58 +202,60 @@ class NewGameScene: SKScene {
     }
     
     private func setupBossHealthBar() {
-        // 2) Bar container
-        bossHealthBar = SKNode()
-        bossHealthBar.position =  CGPoint(x: frame.midX, y: frame.maxY)
+        // 1) Load the full-size texture once
+        fullTexture = SKTexture(imageNamed: "enemy-hp-bar")
+
+        // 2) Create your bar sprite, anchored to the left
+        //    Initially show the full 100%
+        let initialRect = CGRect(x: 0, y: 0, width: 1, height: 1)
+        let tex = SKTexture(rect: initialRect, in: fullTexture)
+        bossHealthBar = SKSpriteNode(texture: tex)
+        bossHealthBar.anchorPoint = CGPoint(x: 0, y: 0.5)
+        bossHealthBar.size = CGSize(width: fullBarWidth, height: barHeight)
+
+        // 3) Position it in your scene
+        bossHealthBar.position = CGPoint(x: frame.midX - fullBarWidth/2,
+                                         y: frame.maxY - 30)
         addChild(bossHealthBar)
         
-        // 3) Create the HP‑bar using slicing:
-        let fullBarWidth: CGFloat = 200
-        let barHeight:    CGFloat = 30
-        let hpYPosition: CGFloat = -30
+        // 3) Add the HP background behind the fill
+        let hpBg = SKSpriteNode(imageNamed: "enemy-hp-bar-bg")
+        hpBg.size = CGSize(width: fullBarWidth, height: barHeight)
+        hpBg.position = CGPoint(x: frame.midX,
+                               y: bossHealthBar.position.y)
+        hpBg.zPosition = bossHealthBar.zPosition - 1
+        addChild(hpBg)
 
-        let hpBar = SKSpriteNode(imageNamed: "hp-bar")
-        hpBar.name = "healthBar"
-
-        // → anchor at left so size changes grow/shrink to the right
-        hpBar.anchorPoint = CGPoint(x: 0, y: 0.5)
-
-        // → tell SpriteKit which portion of the texture is *stretchable*:
-        //   if your end‑caps are, say, 16px wide in a 128px‑wide texture:
-        let tex = hpBar.texture!
-        let cap: CGFloat = 4 / tex.size().width   // 16px / textureWidth
-        hpBar.centerRect = CGRect(x:   cap,
-                                  y:   0,
-                                  width: 1 - 2*cap,
-                                  height: 1)
-
-        // 4) Set its starting size and position
-        hpBar.size = CGSize(width: fullBarWidth, height: barHeight)
-        hpBar.position = CGPoint(x: -fullBarWidth/2, y: hpYPosition)
-        bossHealthBar.addChild(hpBar)
-        
-        // 5) (Optional) If you have a separate background frame:
-        let hpBg = SKSpriteNode(imageNamed: "hpbackground")
-        hpBg.scale(to: CGSize(width: fullBarWidth, height: barHeight), width: true, multiplier: 1)
-        hpBg.position = CGPoint(x: 0, y: hpYPosition)
-        hpBg.zPosition = -1
-        bossHealthBar.addChild(hpBg)
-
-        // 5) (Optional) If you have a separate background frame:
-        let bg = SKSpriteNode(imageNamed: "hp-bar-background")
-        bg.scale(to: CGSize(width: fullBarWidth, height: barHeight), width: true, multiplier: 1)
-        bg.position = CGPoint(x: 0, y: hpYPosition)
-        bg.zPosition = 3
-        bossHealthBar.addChild(bg)
-
-        // 6) Health label
+        // 4) Configure and add the label on top
         bossHealthLabel.text      = "\(bossHealth)/\(bossMaxHealth)"
-        bossHealthLabel.fontName = fontName
-        bossHealthLabel.fontSize  = 12
+        bossHealthLabel.fontName  = fontName
+        bossHealthLabel.fontSize  = 14
         bossHealthLabel.fontColor = .white
-        bossHealthLabel.position  = CGPoint(x: 0, y: hpYPosition - 4)
-        bossHealthLabel.zPosition = 10
-        bossHealthBar.addChild(bossHealthLabel)
+        bossHealthLabel.position  = CGPoint(x: frame.midX,
+                                            y: bossHealthBar.position.y - 5)
+        bossHealthLabel.zPosition = bossHealthBar.zPosition + 1
+        addChild(bossHealthLabel)
+        
+    }
+    
+    private func updateBossHealthBar() {
+        // 1) Compute your health ratio (0…1)
+        let ratio = max(0, min(1, CGFloat(bossHealth) / CGFloat(bossMaxHealth)))
+
+        // 2) Build a new rect sampling only [0…ratio] horizontally
+        let cropRect = CGRect(x: 0, y: 0, width: ratio, height: 1)
+
+        // 3) Create the sub-texture and assign it
+        let cropped = SKTexture(rect: cropRect, in: fullTexture)
+        bossHealthBar.texture = cropped
+
+        // 4) Animate the sprite’s width to match the new texture
+        let newWidth = fullBarWidth * ratio
+        let resize   = SKAction.resize(toWidth: newWidth, duration: 0.15)
+        bossHealthBar.run(resize)
+
+        // 5) (Optional) update your health label
+        bossHealthLabel.text = "\(bossHealth)/\(bossMaxHealth)"
     }
     
     // MARK: – Boss Setup (using centerRect for slicing)
@@ -303,8 +304,6 @@ class NewGameScene: SKScene {
         addChild(playerHpLabel)
         addChild(playerHpNode)
 		
-		
-	
 		
 		// Momentum Bar
         momentumLabel.text = "\(momentum)"
@@ -1319,6 +1318,7 @@ class NewGameScene: SKScene {
                 run(attackSound)
                 guard bossHealth > 0 else { return }
                 updateBossHealth(damage: currentAttackDamage)
+                updateBossHealthBar()
                 self.replaceSelectedCardsAfterAttack()
                 
             },
