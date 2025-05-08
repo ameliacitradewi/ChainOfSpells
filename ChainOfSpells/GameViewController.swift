@@ -17,7 +17,7 @@ class GameViewController: UIViewController {
 		// Pastikan view bisa dikonversi ke SKView
 		if let view = self.view as? SKView {
 			// Buat scene menggunakan ukuran view
-            let scene = SelectElementScene(size: view.bounds.size)
+            let scene = MainMenu(size: view.bounds.size)
 			scene.scaleMode = .aspectFill
     
 			
@@ -25,8 +25,8 @@ class GameViewController: UIViewController {
 			view.presentScene(scene,transition: SKTransition.fade(withDuration: 0.5))
 			
 			view.ignoresSiblingOrder = true
-			view.showsFPS = true
-			view.showsNodeCount = true
+			view.showsFPS = false
+			view.showsNodeCount = false
 		}
 	}
 
