@@ -40,11 +40,18 @@ class NewGameScene: SKScene {
     // MARK: Player Progression
     private var maxSelection = 1
     private var cardInHand = 3
+	
+	// MARK: Player Properties
+	private var playerHealth = 100
+	private var playerMaxHealth: Int = 100
+	private let playerHealthLabel = SKLabelNode(fontNamed: fontName)
+	private var playerDamageTaken: Int = 0
+	
+	private let momentumLabel = SKLabelNode(fontNamed: fontName)
+	private var momentumValue = 2
 
     // MARK: Labels & State
     private let victoryLabel = SKLabelNode(fontNamed: fontName)
-    private var attackChances = 4
-    private let chancesLabel = SKLabelNode(fontNamed: fontName)
     private var discardLeft = 3
     private let discardLeftLabel = SKLabelNode(fontNamed: fontName)
     private let comboBackground = SKSpriteNode(imageNamed: "combo-bg")
@@ -61,8 +68,9 @@ class NewGameScene: SKScene {
     
     // UI
     private var background = SKSpriteNode(imageNamed: "")
-    private let playerHp = SKSpriteNode(imageNamed: "player_hp")
-    private let playerDiscard = SKSpriteNode(imageNamed: "player_discard")
+    private let playerHp = SKSpriteNode(imageNamed: "player-hp-frame")
+	private let momentumBar = SKSpriteNode(imageNamed: "player-hp")
+    private let playerDiscard = SKSpriteNode(imageNamed: "discard-dummy")
 
     
     // MARK: - Lifecycle
@@ -265,24 +273,39 @@ class NewGameScene: SKScene {
 
     // MARK: - Labels Setup
     private func setupLabels() {
-        chancesLabel.text = "x\(attackChances)"
-        chancesLabel.fontSize = 24
-        chancesLabel.fontColor = .white
-        chancesLabel.horizontalAlignmentMode = .left
-        chancesLabel.position = CGPoint(x: 70, y: frame.height/2 - 130)
-        playerHp.position = CGPoint(x: 50, y: frame.height/2 - 120)
-        playerHp.scale(to: frame.size, width: false, multiplier: 0.1)
-        addChild(chancesLabel)
+		// HP Player Bar
+		playerHealthLabel.text = "\(playerHealth)/\(playerMaxHealth)"
+        playerHealthLabel.fontSize = 18
+        playerHealthLabel.fontColor = .white
+		playerHealthLabel.horizontalAlignmentMode = .center
+		playerHealthLabel.position = CGPoint(x: 50, y: frame.midY - 180)
+		
+		playerHp.position = CGPoint(x: 50, y: frame.minY + 90)
+        playerHp.scale(to: frame.size, width: false, multiplier: 0.30)
+        addChild(playerHealthLabel)
         addChild(playerHp)
+		
+		// Momentum Bar
+		momentumLabel.text = "x\(momentumValue)"
+		momentumLabel.fontSize = 18
+		momentumLabel.fontColor = .white
+		momentumLabel.horizontalAlignmentMode = .center
+		momentumLabel.position = CGPoint(x: 100, y: frame.midY - 180)
+		
+		momentumBar.position = CGPoint(x: 100, y: frame.minY + 90)
+		momentumBar.scale(to: frame.size, width: false, multiplier: 0.30)
+		addChild(momentumLabel)
+		addChild(momentumBar)
         
         // Discard left label below chances
-        discardLeftLabel.text = "x\(discardLeft)"
-        discardLeftLabel.fontSize = 24
+        discardLeftLabel.text = "\(discardLeft)"
+        discardLeftLabel.fontSize = 18
         discardLeftLabel.fontColor = .white
-        discardLeftLabel.horizontalAlignmentMode = .left
-        discardLeftLabel.position = CGPoint(x: 70, y: chancesLabel.position.y - 40)
-        playerDiscard.position = CGPoint(x: 50, y: chancesLabel.position.y - 30)
-        playerDiscard.scale(to: frame.size, width: false, multiplier: 0.1)
+		discardLeftLabel.horizontalAlignmentMode = .center
+        discardLeftLabel.position = CGPoint(x: 150, y: frame.midY - 180)
+		
+		playerDiscard.position = CGPoint(x: 150, y: frame.minY + 90)
+		playerDiscard.scale(to: frame.size, width: false, multiplier: 0.30)
         addChild(playerDiscard)
         addChild(discardLeftLabel)
         
@@ -964,17 +987,21 @@ class NewGameScene: SKScene {
             
             
        
-            // 2) Boss attack shake & decrement chance
+            // MARK: 2) Boss attack shake & decrement chance
             .run { [weak self] in
                 guard let self = self else { return }
                 if(self.bossHealth <= 0) {
                     return
                 }
+				// MARK: percentage enemy's damage to mage
+				let percentage = CGFloat(Int.random(in: 5...10)) / 100
+				self.playerDamageTaken = Int(CGFloat(self.playerMaxHealth) * percentage)
+				self.playerHealth = max(0, self.playerHealth - self.playerDamageTaken) // pastikan health player tidak kurang dari 0
+				self.playerHealthLabel.text = "\(self.playerHealth)/\(self.playerMaxHealth)"
                 self.shakeBackground(duration: shakeDur)
-                self.attackChances -= 1
-                self.chancesLabel.text = "x\(self.attackChances)"
-                run(enemyAttackSound)
-                if self.attackChances <= 0 && self.bossHealth > 0 {
+				
+				run(enemyAttackSound)
+                if self.playerHealth <= 0 && self.bossHealth > 0 {
                     showGameOver()
                 }
 
