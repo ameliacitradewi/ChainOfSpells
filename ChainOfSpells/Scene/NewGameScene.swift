@@ -17,6 +17,8 @@ class NewGameScene: SKScene {
     private var currentDeck: [CardModel] = []
     private let cardBackTexture = SKTexture(imageNamed: "back-card")
     private let spellBookTexture = SKTexture(imageNamed: "spell_book")
+    private var chainEffectNodes: [SKNode] = []
+
 
     private var deckNode: SKSpriteNode!
     private let deckCountLabel = SKLabelNode(fontNamed: fontName)
@@ -127,6 +129,7 @@ class NewGameScene: SKScene {
         maxSelection = UserDefaults.standard.playerModel.elements.count
         cardInHand = UserDefaults.standard.playerModel.elements.count + 2
         playerChainEffects = []
+        enemyChainEffect = stageInfo?.enemy.initialChainEffect
 
     }
     
@@ -691,7 +694,7 @@ class NewGameScene: SKScene {
     private func handleAttack() {
         guard !selectedCards.isEmpty else { return }
 
-        let (name, mult, comboCards) = evaluateCombo(for: selectedCards)
+        let (name, mult, comboCards) = evaluateCombo(for: selectedCards,addChainEffect: true)
         playedCards = comboCards
         let base = comboCards.reduce(0) { $0 + $1.attackValue }
         
@@ -831,6 +834,7 @@ class NewGameScene: SKScene {
                 }            }
            
         }
+        updatePlayerChainEffects()
         
         guard bossHealth > 0 else { return }
         
@@ -962,7 +966,7 @@ class NewGameScene: SKScene {
     
     //MARK: New combo function
     // MARK: - Evaluate Combo (returns combo name, multiplier, and relevant cards)
-    private func evaluateCombo(for cards: [CardNode]) -> (name: String, multiplier: Double, comboCards: [CardNode]) {
+    private func evaluateCombo(for cards: [CardNode], addChainEffect : Bool) -> (name: String, multiplier: Double, comboCards: [CardNode]) {
         let allElements = cards.map { $0.element }
         let allValues = cards.map { $0.attackValue }
 
@@ -979,22 +983,61 @@ class NewGameScene: SKScene {
                 // Check for two 2-card pairs forming a known combo twice
                 let sortedElements = elements.sorted()
                 if sortedElements == [.fire, .fire, .wind, .wind] || sortedElements == [.wind, .wind, .fire, .fire] {
-                    playerChainEffects.append(ChainEffectModel(type: .burn, remainingTurn: 2, level: .strong))
+                    if(addChainEffect){
+                        if let index = playerChainEffects.firstIndex(where: { $0.type == .burn }) {
+                            playerChainEffects[index] = ChainEffectModel(type: .burn, remainingTurn: 2, level: .strong)
+                        } else{
+                            playerChainEffects.append(ChainEffectModel(type: .burn, remainingTurn: 2, level: .strong))
+                        }
+                    }
+                    
                     return ("Strong Burn", 1, combo)
                 } else if sortedElements == [.fire, .fire, .water, .water] || sortedElements == [.water, .water, .fire, .fire] {
-                    playerChainEffects.append(ChainEffectModel(type: .mist, remainingTurn: 2, level: .strong))
+                    if(addChainEffect){
+                        if let index = playerChainEffects.firstIndex(where: { $0.type == .mist }) {
+                            playerChainEffects[index] = ChainEffectModel(type: .mist, remainingTurn: 2, level: .strong)
+                        } else{
+                            playerChainEffects.append(ChainEffectModel(type: .mist, remainingTurn: 2, level: .strong))
+                        }
+                        
+                    }
+                    
                     return ("Strong Mist", 1, combo)
                 } else if sortedElements == [.earth, .earth, .wind, .wind] || sortedElements == [.wind, .wind, .earth, .earth] {
-                    playerChainEffects.append(ChainEffectModel(type: .damageReduction, remainingTurn: 2, level: .strong))
+                    if(addChainEffect){
+                        if let index = playerChainEffects.firstIndex(where: { $0.type == .damageReduction }) {
+                            playerChainEffects[index] = ChainEffectModel(type: .damageReduction, remainingTurn: 2, level: .strong)
+                        } else{
+                            playerChainEffects.append(ChainEffectModel(type: .damageReduction, remainingTurn: 2, level: .strong))
+                        }
+                    }
+               
                     return ("Strong Sandstorm", 1, combo)
                 } else if sortedElements == [.fire, .fire, .earth, .earth] || sortedElements == [.earth, .earth, .fire, .fire] {
-                    playerChainEffects.append(ChainEffectModel(type: .explosion, remainingTurn: 1, level: .strong))
+                    if(addChainEffect){
+                        playerChainEffects.append(ChainEffectModel(type: .explosion, remainingTurn: 1, level: .strong))
+                    }
+                
                     return ("Strong Explosion", 1, combo)
                 } else if sortedElements == [.water, .water, .wind, .wind] || sortedElements == [.wind, .wind, .water, .water] {
-                    playerChainEffects.append(ChainEffectModel(type: .critical, remainingTurn: 2, level: .strong))
+                    if(addChainEffect){
+                        if let index = playerChainEffects.firstIndex(where: { $0.type == .critical }) {
+                            playerChainEffects[index] = ChainEffectModel(type: .critical, remainingTurn: 2, level: .strong)
+                        } else{
+                            playerChainEffects.append(ChainEffectModel(type: .critical, remainingTurn: 2, level: .strong))
+                        }
+                        
+                    }
+                    
                     return ("Strong Storm", 1, combo)
                 } else if sortedElements == [.water, .water, .earth, .earth] || sortedElements == [.earth, .earth, .water, .water] {
-                    playerChainEffects.append(ChainEffectModel(type: .regeneration, remainingTurn: 2, level: .strong))
+                    if(addChainEffect){
+                        if let index = playerChainEffects.firstIndex(where: { $0.type == .regeneration }) {
+                            playerChainEffects[index] = ChainEffectModel(type: .regeneration, remainingTurn: 2, level: .strong)
+                        } else{
+                            playerChainEffects.append(ChainEffectModel(type: .regeneration, remainingTurn: 2, level: .strong))
+                        }
+                    }
                     return ("Strong Nature", 1, combo)
                 }
             }
@@ -1046,27 +1089,65 @@ class NewGameScene: SKScene {
 
                 switch elementSet {
                 case [.fire, .water], [.water, .fire]: do {
-                    playerChainEffects.append(ChainEffectModel(type: .mist, remainingTurn: 2, level: .base))
+                    if(addChainEffect){
+                        if let index = playerChainEffects.firstIndex(where: { $0.type == .mist }) {
+                            playerChainEffects[index] = ChainEffectModel(type: .mist, remainingTurn: 2, level: .base)
+                        } else{
+                            playerChainEffects.append(ChainEffectModel(type: .mist, remainingTurn: 2, level: .base))
+                        }
+                    }
+                
                     return ("Mist", 1, combo)
                 }
                 case [.earth, .wind], [.wind, .earth]: do {
-                    playerChainEffects.append(ChainEffectModel(type: .damageReduction, remainingTurn: 2, level: .base))
+                    if(addChainEffect){
+                        if let index = playerChainEffects.firstIndex(where: { $0.type == .damageReduction }) {
+                            playerChainEffects[index] = ChainEffectModel(type: .damageReduction, remainingTurn: 2, level: .base)
+                        } else{
+                            playerChainEffects.append(ChainEffectModel(type: .damageReduction, remainingTurn: 2, level: .base))
+                        }
+                        
+                    }
+                   
                     return ("Sandstorm", 1, combo)
                 }
                 case [.fire, .wind], [.wind, .fire]: do {
-                    playerChainEffects.append(ChainEffectModel(type: .burn, remainingTurn: 2, level: .base))
+                    if(addChainEffect){
+                        if let index = playerChainEffects.firstIndex(where: { $0.type == .burn }) {
+                            playerChainEffects[index] = ChainEffectModel(type: .burn, remainingTurn: 2, level: .base)
+                        } else{
+                            playerChainEffects.append(ChainEffectModel(type: .burn, remainingTurn: 2, level: .base))
+                        }
+                    }
+                    
                     return ("Burn", 1, combo)
                 }
                 case [.fire, .earth], [.earth, .fire]: do {
-                    playerChainEffects.append( ChainEffectModel(type: .explosion, remainingTurn: 1, level: .base))
+                    if(addChainEffect){
+                        playerChainEffects.append( ChainEffectModel(type: .explosion, remainingTurn: 1, level: .base))
+                    }
+                   
                     return ("Explosion", 1, combo)
                 }
                 case [.water, .wind], [.wind, .water]: do {
-                    playerChainEffects.append(ChainEffectModel(type: .critical, remainingTurn: 2, level: .base))
+                    if(addChainEffect){
+                        if let index = playerChainEffects.firstIndex(where: { $0.type == .critical }) {
+                            playerChainEffects[index] = ChainEffectModel(type: .critical, remainingTurn: 2, level: .base)
+                        } else{
+                            playerChainEffects.append(ChainEffectModel(type: .critical, remainingTurn: 2, level: .base))
+                        }
+                    }
                     return ("Storm", 1, combo)
                 }
                 case [.water, .earth], [.earth, .water]: do {
-                    playerChainEffects.append(ChainEffectModel(type: .regeneration, remainingTurn: 1, level: .base))
+                    if(addChainEffect){
+                        if let index = playerChainEffects.firstIndex(where: { $0.type == .critical }) {
+                            playerChainEffects[index] = ChainEffectModel(type: .regeneration, remainingTurn: 1, level: .base)
+                        } else{
+                            playerChainEffects.append(ChainEffectModel(type: .regeneration, remainingTurn: 1, level: .base))
+                        }
+                    }
+                  
                     return ("Nature", 1, combo)
                 }
                 default: break
@@ -1091,12 +1172,44 @@ class NewGameScene: SKScene {
         }
     }
     
-    func updatePlayerChainEffects() {
+    func updatePlayerChainEffectsCountdown(){
         playerChainEffects = playerChainEffects.compactMap { effect in
             var updatedEffect = effect
             updatedEffect.remainingTurn -= 1
             return updatedEffect.remainingTurn > 0 ? updatedEffect : nil
         }
+    }
+    
+    func updatePlayerChainEffects() {
+        chainEffectNodes.forEach { $0.removeFromParent() }
+        chainEffectNodes = []
+        for (index, effect) in playerChainEffects.enumerated() {
+            let containerNode = SKSpriteNode(imageNamed: "momentum")
+            let yPostion = (160 + CGFloat((index + 1)) * 45)
+            containerNode.position = CGPoint(x: 60, y: yPostion)
+            containerNode.size = CGSize(width: 50, height: 50)
+            containerNode.zPosition = 12
+
+            var chainAsset = ""
+            switch effect.type {
+            case .burn: chainAsset = "chain_burn"
+            case .explosion:chainAsset = "chain_explosion"
+            case .mist:chainAsset = "chain_mist"
+            case .critical:chainAsset = "chain_critical"
+            case .regeneration:chainAsset = "chain_regeneration"
+            case .damageReduction:chainAsset = "chain_damage_reduction"
+            }
+            print("CHAIN ASSET \(chainAsset)")
+            let chainNode = SKSpriteNode(imageNamed: chainAsset)
+            chainNode.size = CGSize(width: 30, height: 30)
+            chainNode.position = CGPoint(x: 0, y: 0)
+            chainNode.zPosition = 13
+            containerNode.addChild(chainNode)
+            chainEffectNodes.append(containerNode)
+            addChild(containerNode)
+        }
+       
+        
     }
     
     // MARK: - Combo Info Update
@@ -1106,7 +1219,7 @@ class NewGameScene: SKScene {
             comboBackground.isHidden = true
             return
         }
-        let (name, mult, comboCards) = evaluateCombo(for: selectedCards)
+        let (name, mult, comboCards) = evaluateCombo(for: selectedCards,addChainEffect: false)
         
         // Convert sum to Double first, multiply, then cast to Int
         let damage = Int(Double(comboCards.reduce(0) { $0 + $1.attackValue }) * mult)
@@ -1399,7 +1512,9 @@ class NewGameScene: SKScene {
                 self.updateDeckCount()
                 self.updateButtonVisibility()
                 self.isAnimating = false
+                updatePlayerChainEffectsCountdown()
                 updatePlayerChainEffects()
+
             }
         ]))
     }

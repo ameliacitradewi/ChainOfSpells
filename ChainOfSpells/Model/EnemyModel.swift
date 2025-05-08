@@ -9,5 +9,5 @@ struct EnemyModel {
     let name : String
     let idleAnimations : [String]
     let hp : Int
-    
+    let initialChainEffect : ChainEffectModel?
 }
