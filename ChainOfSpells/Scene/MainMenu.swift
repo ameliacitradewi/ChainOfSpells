@@ -20,7 +20,7 @@ class MainMenu: SKScene {
 	}
 
 	private func setupBackground() {
-		background = SKSpriteNode(imageNamed: "background_1")
+		background = SKSpriteNode(imageNamed: "main-menu")
 		background.position = CGPoint(x: frame.midX, y: frame.midY)
 		background.zPosition = -1
 		background.size = self.size
@@ -28,13 +28,18 @@ class MainMenu: SKScene {
 	}
 
 	private func setupPlayButton() {
-		playButton = SKSpriteNode(imageNamed: "discard_button")
-		playButton.name = "play"
-		playButton.position = CGPoint(x: frame.midX, y: frame.midY)
-		playButton.zPosition = 1
-		playButton.setScale(0.3)
-		addChild(playButton)
+		let label = SKLabelNode(text: "Play")
+		label.name = "play"
+		label.fontName = "AlmendraSC-Regular"
+		label.fontSize = 30
+		label.fontColor = .yellow
+		label.position = CGPoint(x: frame.midX, y: frame.midY - 120)
+//		label.zPosition = 1
+		addChild(label)
+
+		self.playButton = SKSpriteNode()
 	}
+
 
 	private func playBackgroundMusic() {
 		if let path = Bundle.main.path(forResource: "forest-bg-music", ofType: "mp3") {
