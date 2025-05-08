@@ -22,24 +22,36 @@ class Tutorial1Scene: SKScene {
         CardModel(element: Element.fire, value: 1),
         CardModel(element: Element.fire, value: 2),
         CardModel(element: Element.fire, value: 3),
+        CardModel(element: Element.fire, value: 6),
+        CardModel(element: Element.fire, value: 7),
+        CardModel(element: Element.fire, value: 8),
+        CardModel(element: Element.fire, value: 9),
         CardModel(element: Element.fire, value: 10),
     ]
+
     var enemy1 = EnemyModel( name: "enemy_1", idleAnimations:  ["boss1","boss2","boss3","boss4","boss5","boss6","boss7"], hp: 10)
-    
-    
-    
     
     // Tutorial Steps
     enum TutorialStep {
+        case showEnemy
+        case showCard
         case selectCard
         case firstAttack
+        case takeDamage
         case selectSecondCard
         case discard
+        case discardCount
         case selectThirdCard
         case secondAttack
     }
-    private var currentTutorialStep : TutorialStep = .selectCard
+    private var currentTutorialStep : TutorialStep = .showEnemy
     private var blackOverlay : SKSpriteNode!
+    
+    // tutorial dialog
+    private let dialogBackground = SKSpriteNode(imageNamed: "combo-bg")
+    private let dialogLabel = SKLabelNode(fontNamed: fontName)
+    private let characterSprite = SKSpriteNode(texture: SKTexture(imageNamed: "character"))
+
     
     private var discardPile: [CardModel] = []
     private var currentDeck: [CardModel] = []
@@ -95,6 +107,7 @@ class Tutorial1Scene: SKScene {
     
     // MARK: - Lifecycle
     override func didMove(to view: SKView) {
+        setDialog()
         setBlackOverlay()
         setGameRules()
         setBackgroundImage()
@@ -123,6 +136,31 @@ class Tutorial1Scene: SKScene {
         }
     }
     
+    private func setDialog() {
+        dialogBackground.size.width = self.size.width * 0.8
+        dialogBackground.size.height = self.size.height * 0.1
+        dialogBackground.zPosition = 102
+        dialogBackground.name = "dialogBackground"
+        dialogLabel.fontSize = 12
+        dialogLabel.fontColor = .white
+        dialogLabel.zPosition = 103
+        dialogLabel.horizontalAlignmentMode = .center
+        dialogLabel.verticalAlignmentMode = .center
+        dialogLabel.position = .zero
+        
+        dialogBackground.position = CGPoint(x: frame.midX, y: frame.midY)
+        dialogBackground.addChild(dialogLabel)
+        addChild(dialogBackground)
+        dialogBackground.isHidden = true
+        
+        // set character
+        characterSprite.scale(to: frame.size, width: false, multiplier: 1)
+        characterSprite.zPosition = 104
+        characterSprite.position = CGPoint(x: 100, y: frame.midY)
+        addChild(characterSprite)
+        characterSprite.isHidden = true
+    }
+    
   
     
     // MARK: UPDATE ON PLAYER PROGRESSION
@@ -146,49 +184,161 @@ class Tutorial1Scene: SKScene {
     func showBlackOverlay(duration: TimeInterval = 0.3) {
         blackOverlay.isHidden = false // Ensure it's visible
         blackOverlay.alpha = 0.0
-        blackOverlay.run(SKAction.fadeAlpha(to: 0.7, duration: duration))
+        blackOverlay.run(SKAction.fadeAlpha(to: 0.5, duration: duration))
     }
     
     func hideBlackOverlay(duration: TimeInterval = 0.3) {
         let fadeOut = SKAction.fadeOut(withDuration: duration)
         let hide = SKAction.run { [self] in
             self.blackOverlay.isHidden = true
-            self.blackOverlay.alpha = 0.6 // reset alpha for next show
+            self.blackOverlay.alpha = 0.5 // reset alpha for next show
         }
         blackOverlay.run(SKAction.sequence([fadeOut, hide]))
+        characterSprite.isHidden = true
+        dialogBackground.isHidden = true
     }
     
     private func updateTutorialStage(){
         print("TUTORIAL : \(currentTutorialStep)")
         switch currentTutorialStep {
+        case .showEnemy: do {
+            dialogBackground.isHidden = false
+            dialogBackground.position = CGPoint(x: bossSprite.position.x, y: bossSprite.position.y - 120)
+            dialogLabel.typeText(
+                "Ini musuh dan healthbarnya",
+                backgroundNode: dialogBackground,
+                horizontalPadding: 100,
+                    verticalPadding: 20
+            )
+            bossSprite.zPosition = 100
+            bossHealthBar.zPosition = 100
+            showBlackOverlay()
+            characterSprite.isHidden = false
+        }
+            
+        case .showCard: do {
+            bossSprite.zPosition = 1
+            bossHealthBar.zPosition = 10
+            playAreaCards.forEach { $0.zPosition = 100 }
+            dialogBackground.position = CGPoint(x: playAreaCards[1].position.x, y: playAreaCards[1].position.y  + 80)
+            dialogLabel.typeText(
+                "Ini kartu ku",
+                backgroundNode: dialogBackground,
+                horizontalPadding: 100,
+                    verticalPadding: 20
+            )
+        }
+            
         case .selectCard: do {
+            playAreaCards.forEach { $0.zPosition = 10 }
             playAreaCards.first!.zPosition = 100
             showBlackOverlay()
+            dialogBackground.position = CGPoint(x: playAreaCards[0].position.x, y: playAreaCards[0].position.y + 60)
+            dialogLabel.typeText(
+                "pilih kartu 5",
+                backgroundNode: dialogBackground,
+                horizontalPadding: 100,
+                    verticalPadding: 20
+            )
         }
         case .firstAttack: do {
             playAreaCards.first!.zPosition = 10
             attackButton.zPosition = 100
+            dialogBackground.position = CGPoint(x: attackButton.position.x, y: attackButton.position.y + 50)
+            dialogLabel.typeText(
+                "klik attack",
+                backgroundNode: dialogBackground,
+                horizontalPadding: 100,
+                    verticalPadding: 20
+            )
+        }
+        case .takeDamage: do {
+            playerHp.zPosition = 100
+            chancesLabel.zPosition = 100
+            showBlackOverlay()
+            dialogBackground.isHidden = false
+            characterSprite.isHidden = false
+            characterSprite.position = CGPoint(x:frame.maxX - 200,y : frame.midY)
+            dialogBackground.position = CGPoint(x: playerHp.position.x + 20, y: playerHp.position.y + 30)
+            dialogLabel.typeText(
+                "sakit bang",
+                backgroundNode: dialogBackground,
+                horizontalPadding: 100,
+                    verticalPadding: 20
+            )
         }
         case .selectSecondCard: do {
+            playerHp.zPosition = 10
+            chancesLabel.zPosition = 10
             playAreaCards.first!.zPosition = 100
             attackButton.zPosition = 10
             showBlackOverlay()
+            dialogLabel.typeText(
+                "kartu nya jelek anjr",
+                backgroundNode: dialogBackground,
+                horizontalPadding: 100,
+                    verticalPadding: 20
+            )
+            showBlackOverlay()
+            dialogBackground.position = CGPoint(x: playAreaCards[0].position.x, y: playAreaCards[0].position.y + 60)
+            characterSprite.position = CGPoint(x: 100, y: frame.midY)
+
         }
         case .discard: do {
             playAreaCards.first!.zPosition = 10
             discardButton.zPosition = 100
+            dialogBackground.position = CGPoint(x: discardButton.position.x, y: attackButton.position.y + 50)
+            dialogLabel.typeText(
+                "discard lah",
+                backgroundNode: dialogBackground,
+                horizontalPadding: 100,
+                    verticalPadding: 20
+            )
+        }
+        case .discardCount: do {
+            showBlackOverlay()
+            discardButton.zPosition = 10
+            discardLeftLabel.zPosition = 100
+            playerDiscard.zPosition = 100
+            dialogBackground.isHidden = false
+            characterSprite.isHidden = false
+            characterSprite.position = CGPoint(x:frame.maxX - 200,y : frame.midY)
+            dialogBackground.position = CGPoint(x: playerDiscard.position.x + 60, y: playerDiscard.position.y + 30)
+            dialogLabel.typeText(
+                "discard berkurang",
+                backgroundNode: dialogBackground,
+                horizontalPadding: 100,
+                    verticalPadding: 20
+            )
         }
         case .selectThirdCard: do {
-            showBlackOverlay()
+            discardLeftLabel.zPosition = 10
+            playerDiscard.zPosition = 10
             playAreaCards.last!.zPosition = 100
             discardButton.zPosition = 10
+            dialogLabel.typeText(
+                "pilih kartu 10",
+                backgroundNode: dialogBackground,
+                horizontalPadding: 100,
+                    verticalPadding: 20
+            )
+            dialogBackground.position = CGPoint(x: playAreaCards.last!.position.x, y: playAreaCards.last!.position.y + 60)
+            characterSprite.position = CGPoint(x: 100, y: frame.midY)
 
         }
         case .secondAttack: do {
             playAreaCards.last!.zPosition = 10
             attackButton.zPosition = 100
+            dialogBackground.position = CGPoint(x: attackButton.position.x, y: attackButton.position.y + 50)
+            dialogLabel.typeText(
+                "gas serang",
+                backgroundNode: dialogBackground,
+                horizontalPadding: 100,
+                    verticalPadding: 20
+            )
         }
             
+       
         }
     }
     
@@ -386,6 +536,18 @@ class Tutorial1Scene: SKScene {
         let location = touch.location(in: self)
         
         switch currentTutorialStep {
+        case .showEnemy: do {
+            currentTutorialStep = .showCard
+            updateTutorialStage()
+            return
+
+        }
+        case .showCard: do {
+            currentTutorialStep = .selectCard
+            updateTutorialStage()
+            return
+        }
+       
         case .selectCard: do {
             if playAreaCards.first!.contains(location){
                 currentTutorialStep = .firstAttack
@@ -398,7 +560,7 @@ class Tutorial1Scene: SKScene {
         }
         case .firstAttack: do {
             if attackButton.contains(location){
-                currentTutorialStep = .selectSecondCard
+                currentTutorialStep = .takeDamage
                 hideBlackOverlay()
                 run(clickSound)
                 handleAttack()
@@ -406,6 +568,11 @@ class Tutorial1Scene: SKScene {
             } else{
                 return
             }
+        }
+        case .takeDamage: do {
+            currentTutorialStep = .selectSecondCard
+            updateTutorialStage()
+            return
         }
         case .selectSecondCard: do {
             if playAreaCards.first!.contains(location){
@@ -419,7 +586,7 @@ class Tutorial1Scene: SKScene {
         }
         case .discard: do {
             if discardButton.contains(location){
-                currentTutorialStep = .selectThirdCard
+                currentTutorialStep = .discardCount
                 run(clickSound)
                 handleDiscard();
                 hideBlackOverlay()
@@ -427,6 +594,12 @@ class Tutorial1Scene: SKScene {
             } else {
                 return
             }
+        }
+        case .discardCount: do {
+            currentTutorialStep = .selectThirdCard
+            updateTutorialStage()
+            showBlackOverlay()
+            return
         }
         case .selectThirdCard: do {
             if playAreaCards.last!.contains(location){
@@ -449,6 +622,7 @@ class Tutorial1Scene: SKScene {
                 return
             }
         }
+    
         }
         
         if childNode(withName: "restartWindow") != nil {
