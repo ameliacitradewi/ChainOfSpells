@@ -68,9 +68,9 @@ class NewGameScene: SKScene {
     
     // UI
     private var background = SKSpriteNode(imageNamed: "")
-    private let playerHp = SKSpriteNode(imageNamed: "player-hp-frame")
-	private let momentumBar = SKSpriteNode(imageNamed: "player-hp")
-    private let playerDiscard = SKSpriteNode(imageNamed: "discard-dummy")
+    private let playerHp = SKSpriteNode(imageNamed: "player-hp")
+	private let momentumBar = SKSpriteNode(imageNamed: "momentum")
+    private let playerDiscard = SKSpriteNode(imageNamed: "discard-card")
 
     
     // MARK: - Lifecycle
@@ -273,41 +273,41 @@ class NewGameScene: SKScene {
 
     // MARK: - Labels Setup
     private func setupLabels() {
-		// HP Player Bar
-		playerHealthLabel.text = "\(playerHealth)/\(playerMaxHealth)"
-        playerHealthLabel.fontSize = 18
-        playerHealthLabel.fontColor = .white
-		playerHealthLabel.horizontalAlignmentMode = .center
-		playerHealthLabel.position = CGPoint(x: 50, y: frame.midY - 180)
-		
-		playerHp.position = CGPoint(x: 50, y: frame.minY + 90)
-        playerHp.scale(to: frame.size, width: false, multiplier: 0.30)
-        addChild(playerHealthLabel)
-        addChild(playerHp)
-		
-		// Momentum Bar
+		// Momentum Bar - top
 		momentumLabel.text = "x\(momentumValue)"
 		momentumLabel.fontSize = 18
 		momentumLabel.fontColor = .white
-		momentumLabel.horizontalAlignmentMode = .center
-		momentumLabel.position = CGPoint(x: 100, y: frame.midY - 180)
+		momentumLabel.horizontalAlignmentMode = .left
+		momentumLabel.position = CGPoint(x: momentumBar.position.x + 35, y: frame.minY + 117)
 		
-		momentumBar.position = CGPoint(x: 100, y: frame.minY + 90)
-		momentumBar.scale(to: frame.size, width: false, multiplier: 0.30)
+		momentumBar.position = CGPoint(x: 18, y: frame.minY + 120)
+		momentumBar.scale(to: frame.size, width: false, multiplier: 0.07)
 		addChild(momentumLabel)
 		addChild(momentumBar)
-        
-        // Discard left label below chances
-        discardLeftLabel.text = "\(discardLeft)"
-        discardLeftLabel.fontSize = 18
-        discardLeftLabel.fontColor = .white
-		discardLeftLabel.horizontalAlignmentMode = .center
-        discardLeftLabel.position = CGPoint(x: 150, y: frame.midY - 180)
 		
-		playerDiscard.position = CGPoint(x: 150, y: frame.minY + 90)
-		playerDiscard.scale(to: frame.size, width: false, multiplier: 0.30)
-        addChild(playerDiscard)
-        addChild(discardLeftLabel)
+		// Discard left label below chances - middle
+		discardLeftLabel.text = "x\(discardLeft)"
+		discardLeftLabel.fontSize = 18
+		discardLeftLabel.fontColor = .white
+		discardLeftLabel.horizontalAlignmentMode = .left
+		discardLeftLabel.position = CGPoint(x: playerDiscard.position.x + 35, y: frame.minY + 80)
+		
+		playerDiscard.position = CGPoint(x: 18, y: frame.minY + 85)
+		playerDiscard.scale(to: frame.size, width: false, multiplier: 0.09)
+		addChild(playerDiscard)
+		addChild(discardLeftLabel)
+
+		// HP Player Bar - bottom
+		playerHealthLabel.text = "\(playerHealth)/\(playerMaxHealth)"
+		playerHealthLabel.fontSize = 18
+		playerHealthLabel.fontColor = .white
+		playerHealthLabel.horizontalAlignmentMode = .left
+		playerHealthLabel.position = CGPoint(x: playerHp.position.x + 35, y: frame.minY + 43)
+		
+		playerHp.position = CGPoint(x: 18, y: frame.minY + 50)
+		playerHp.scale(to: frame.size, width: false, multiplier: 0.06)
+		addChild(playerHealthLabel)
+		addChild(playerHp)
         
 		comboBackground.position =  CGPoint(x: frame.midX, y: attackButton.position.y + 40)
         comboBackground.scale(to: frame.size, width: true, multiplier: 0.20)
