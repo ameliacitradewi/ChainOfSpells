@@ -39,6 +39,9 @@ class NewGameScene: SKScene {
     private var bossMaxHealth: Int = 10
     private var bossHealthBar = SKNode()
     private var bossHealthLabel = SKLabelNode()
+    private var enemyChainEffectNode = SKSpriteNode(imageNamed: "momentum")
+    private var enemyChainEffecTypeNode = SKSpriteNode(imageNamed: "chain_burn")
+
     
     // MARK: Player Progression
     private var maxSelection = 1
@@ -206,6 +209,27 @@ class NewGameScene: SKScene {
     }
     
     private func setupBossHealthBar() {
+        // 1) Enemy Chain Effect
+        enemyChainEffectNode.position =  CGPoint(x: frame.midX - 115, y: frame.maxY - 30)
+        enemyChainEffectNode.size = CGSize(width: 30, height: 30)
+        enemyChainEffecTypeNode.size = CGSize(width: 20, height: 20)
+      
+        if enemyChainEffect != nil{
+            switch enemyChainEffect!.type   {
+            case .burn: enemyChainEffecTypeNode.texture = SKTexture(imageNamed: "chain_burn")
+            case .explosion: enemyChainEffecTypeNode.texture = SKTexture(imageNamed: "chain_explosion")
+            case .mist: enemyChainEffecTypeNode.texture = SKTexture(imageNamed: "chain_mist")
+            case .critical: enemyChainEffecTypeNode.texture = SKTexture(imageNamed: "chain_critical")
+            case .regeneration: enemyChainEffecTypeNode.texture = SKTexture(imageNamed: "chain_regeneration")
+            case .damageReduction:enemyChainEffecTypeNode.texture = SKTexture(imageNamed: "chain_damage_reduction")
+            }
+        }
+        addChild(enemyChainEffectNode)
+        enemyChainEffectNode.addChild(enemyChainEffecTypeNode)
+        if enemyChainEffect == nil{
+            enemyChainEffecTypeNode.isHidden = true
+        }
+        
         // 2) Bar container
         bossHealthBar = SKNode()
         bossHealthBar.position =  CGPoint(x: frame.midX, y: frame.maxY)

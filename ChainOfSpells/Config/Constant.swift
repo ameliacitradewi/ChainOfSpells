@@ -57,7 +57,7 @@ var stages : [StageModel] =  [
 
 
 /// Enemy
-var enemy1 = EnemyModel( name: "enemy_1", idleAnimations:  ["boss1","boss2","boss3","boss4","boss5","boss6","boss7"], hp: 10, initialChainEffect: nil)
+var enemy1 = EnemyModel( name: "enemy_1", idleAnimations:  ["boss1","boss2","boss3","boss4","boss5","boss6","boss7"], hp: 10, initialChainEffect: ChainEffectModel(type: .burn, remainingTurn: 1, level: .enemy))
 
 var enemy2 = EnemyModel( name: "enemy_2", idleAnimations:  ["boss1","boss2","boss3","boss4","boss5","boss6","boss7"], hp: 20, initialChainEffect: ChainEffectModel(type: .burn, remainingTurn: 1, level: .enemy))
 
