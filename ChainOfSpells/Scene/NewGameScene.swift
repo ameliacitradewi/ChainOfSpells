@@ -724,17 +724,16 @@ class NewGameScene: SKScene {
             lastMomentumElement = nil
         }
         
-        
-        print("Current Momentum: \(momentum)")
-        momentumLabel.text = "\(momentum)"
-        momentumMultiplierLabel.text = "x\(momentumMultiplier)"
-
         let levelsGained = momentum / 100
         if levelsGained > 0 {
             momentumMultiplier += levelsGained
             momentum %= 100  // Carry over excess momentum
             print("Momentum Multiplier: \(momentumMultiplier)")
         }
+        
+        print("Current Momentum: \(momentum)")
+        momentumLabel.text = "\(momentum)"
+        momentumMultiplierLabel.text = "x\(momentumMultiplier)"
         
         currentAttackDamage = Int(Double(base) * mult * (Double(momentumMultiplier)))
         print("Attack: \(name) ×\(mult) → Combo Cards: \(comboCards.map { $0.attackValue }), Damage = \(currentAttackDamage)")
