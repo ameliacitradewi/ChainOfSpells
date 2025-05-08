@@ -68,6 +68,9 @@ class NewGameScene: SKScene {
     private var momentum: Int = 0
     private var momentumMultiplier: Int = 0
     private var lastMomentumElement: Element? = nil
+    
+    //rework attack
+    private var currentAttackDamage: Int = 0
 
     
     // MARK: - Lifecycle
@@ -599,8 +602,6 @@ class NewGameScene: SKScene {
 
         let (name, mult, comboCards) = evaluateCombo(for: selectedCards)
         let base = comboCards.reduce(0) { $0 + $1.attackValue }
-        let total = Int(Double(base) * mult)
-        print("Attack: \(name) ×\(mult) → Combo Cards: \(comboCards.map { $0.attackValue }), Damage = \(total)")
         
         // Momentum Logic
         let selectedElements = selectedCards.map { $0.element }
@@ -637,6 +638,9 @@ class NewGameScene: SKScene {
             print("Momentum Multiplier: \(momentumMultiplier)")
         }
         
+        currentAttackDamage = Int(Double(base) * mult * (1 + Double(momentumMultiplier)))
+        print("Attack: \(name) ×\(mult) → Combo Cards: \(comboCards.map { $0.attackValue }), Damage = \(currentAttackDamage)")
+        
         guard bossHealth > 0 else { return }
         
         let delay = SKAction.wait(forDuration: 1.0)
@@ -644,7 +648,6 @@ class NewGameScene: SKScene {
             self?.animateHandTransitionAfterAttack()
         }
         run(.sequence([delay, callTransition]))
-
 
     }
 
@@ -987,13 +990,14 @@ class NewGameScene: SKScene {
                 cardAttackAnimation()
                 comboBackground.isHidden = true
                 comboInfoLabel.text = ""
-                let base = selectedCards.reduce(0) { $0 + $1.attackValue }
-                let (name, mult, comboCards) = evaluateCombo(for: selectedCards)
-                let total = Int(Double(base) * mult)
-                print("Attack: \(name) ×\(mult) → Base = \(base), Damage = \(total)")
+//                let base = selectedCards.reduce(0) { $0 + $1.attackValue }
+//                let (name, mult, comboCards) = evaluateCombo(for: selectedCards)
+//                let total = Int(Double(base) * mult)
+//                print("Attack: \(name) ×\(mult) → Base = \(base), Damage = \(total)")
+                print(currentAttackDamage)
                 run(attackSound)
                 guard bossHealth > 0 else { return }
-                updateBossHealth(damage: total)
+                updateBossHealth(damage: currentAttackDamage)
                 self.replaceSelectedCardsAfterAttack()
                 
             },
