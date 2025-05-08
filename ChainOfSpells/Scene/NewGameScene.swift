@@ -67,6 +67,10 @@ class NewGameScene: SKScene {
     // Chain Effect
     private var playerChainEffect : ChainEffect?
     private var enemyChainEffect : ChainEffect?
+    // Add momentum variables
+    private var momentum: Int = 0
+    private var momentumMultiplier: Int = 0
+    private var lastMomentumElement: Element? = nil
 
     
     // MARK: - Lifecycle
@@ -601,6 +605,40 @@ class NewGameScene: SKScene {
         let total = Int(Double(base) * mult)
         print("Attack: \(name) ×\(mult) → Combo Cards: \(comboCards.map { $0.attackValue }), Damage = \(total)")
         
+        // Momentum Logic
+        let selectedElements = selectedCards.map { $0.element }
+        guard let firstElement = selectedElements.first else { return }
+        let allSame = selectedElements.allSatisfy { $0 == firstElement }
+        
+        if allSame {
+            let currentElement = selectedElements[0]
+            
+            if lastMomentumElement == nil {
+                // FIRST ELEMENT EVER - Always add 25
+                momentum = 25 * selectedCards.count
+            }
+            else if currentElement == lastMomentumElement {
+                // SAME ELEMENT - Accumulate
+                momentum += 25 * selectedCards.count
+            }
+            else {
+                // DIFFERENT ELEMENT - Reset to 0
+                momentum = 0
+            }
+            
+            lastMomentumElement = currentElement
+        } else {
+            momentum = 0
+            lastMomentumElement = nil
+        }
+        print("Current Momentum: \(momentum)")
+        
+        let levelsGained = momentum / 100
+        if levelsGained > 0 {
+            momentumMultiplier += levelsGained
+            momentum %= 100  // Carry over excess momentum
+            print("Momentum Multiplier: \(momentumMultiplier)")
+        }
         
         guard bossHealth > 0 else { return }
         
@@ -737,17 +775,30 @@ class NewGameScene: SKScene {
         let allElements = cards.map { $0.element }
         let allValues = cards.map { $0.attackValue }
 
-        // Check for the highest possible combo in descending order of priority (4 → 3 → 2)
         // 4-card combos
         if cards.count >= 4 {
             for combo in combinations(of: cards, size: 4) {
                 let elements = combo.map { $0.element }
                 let elementCounts = Dictionary(grouping: elements, by: { $0 }).mapValues { $0.count }
+
                 if elementCounts.values.contains(4) {
-                    return ("Quad Spell", 2.5, combo)
+                    return ("Chain of Spells", 3, combo)
                 }
-                if Set(elements).count == 4 && allValues.filter({ $0 == combo[0].attackValue }).count == 4 {
-                    return ("Harmony", 2.0, combo)
+
+                // Check for two 2-card pairs forming a known combo twice
+                let sortedElements = elements.sorted()
+                if sortedElements == [.fire, .fire, .wind, .wind] || sortedElements == [.wind, .wind, .fire, .fire] {
+                    return ("Strong Burn", 1, combo)
+                } else if sortedElements == [.fire, .fire, .water, .water] || sortedElements == [.water, .water, .fire, .fire] {
+                    return ("Strong Mist", 1, combo)
+                } else if sortedElements == [.earth, .earth, .wind, .wind] || sortedElements == [.wind, .wind, .earth, .earth] {
+                    return ("Strong Sandstorm", 1, combo)
+                } else if sortedElements == [.fire, .fire, .earth, .earth] || sortedElements == [.earth, .earth, .fire, .fire] {
+                    return ("Strong Explosion", 1, combo)
+                } else if sortedElements == [.water, .water, .wind, .wind] || sortedElements == [.wind, .wind, .water, .water] {
+                    return ("Strong Storm", 1, combo)
+                } else if sortedElements == [.water, .water, .earth, .earth] || sortedElements == [.earth, .earth, .water, .water] {
+                    return ("Strong Nature", 1, combo)
                 }
             }
         }
@@ -758,31 +809,39 @@ class NewGameScene: SKScene {
                 let elements = combo.map { $0.element }
                 let elementCounts = Dictionary(grouping: elements, by: { $0 }).mapValues { $0.count }
                 if elementCounts.values.contains(3) {
-                    return ("Triple Spell", 2.0, combo)
-                }
-                if Set(elements).count == 3 && combo.map({ $0.attackValue }).allEqual() {
-                    return ("Synergy", 2.2, combo)
+                    return ("Chain of Spells", 2.0, combo)
                 }
             }
         }
 
+        // Reject 4-card hands with no duplicates (no possible combo)
+        if cards.count >= 4 {
+            let uniqueElements = Set(allElements)
+            if uniqueElements.count == cards.count {
+                let highestCard = cards.max(by: { $0.attackValue < $1.attackValue })!
+                return ("Basic Spell", 1.0, [highestCard])
+            }
+        }
+        
         // 2-card combos
         if cards.count >= 2 {
             for combo in combinations(of: cards, size: 2) {
                 let elements = combo.map { $0.element }
-                let values = combo.map { $0.attackValue }
-                
+
+                // Prioritize same-element pair (Chain of Spells)
                 if elements[0] == elements[1] {
-                    return ("Double Spell", 1.5, combo)
+                    return ("Chain of Spells", 1.5, combo)
                 }
-                
-                if values[0] == values[1] {
-                    return ("Double Spell", 1.5, combo)
-                }
+            }
+
+            // If no same-element pairs found, then check mixed-element combos
+            for combo in combinations(of: cards, size: 2) {
+                let elements = combo.map { $0.element }
                 let elementSet = Set(elements)
+
                 switch elementSet {
                 case [.fire, .water], [.water, .fire]: do {
-                    return ("Steam", 1, combo)
+                    return ("Mist", 1, combo)
                 }
                 case [.earth, .wind], [.wind, .earth]: do {
                     return ("Sandstorm", 1, combo)

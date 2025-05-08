@@ -8,7 +8,7 @@
 
 /// Enum
 // MARK: enum untuk pilihan elemen di deck kartu
-enum Element: String, CaseIterable, Codable {
+enum Element: String, CaseIterable, Codable,Comparable {
     case fire, water, earth, wind
     var cardAsset : String {
         switch self {
@@ -22,6 +22,9 @@ enum Element: String, CaseIterable, Codable {
             return "card_wind"
         }
     }
+    static func < (lhs: Element, rhs: Element) -> Bool {
+          return lhs.rawValue < rhs.rawValue
+      }
 }
 
 

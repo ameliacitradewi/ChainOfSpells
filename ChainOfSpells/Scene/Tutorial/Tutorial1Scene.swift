@@ -1418,7 +1418,7 @@ class Tutorial1Scene: SKScene {
 
     private func createBossFlashAction() -> SKAction {
         // hit effect colorize to white (full blend), then back to normal
-        let flashOn  = SKAction.colorize(with: UIColor(named: "HitEffectColor")!, colorBlendFactor: 1.0, duration: 0.25)
+        let flashOn  = SKAction.colorize(with: .red, colorBlendFactor: 1.0, duration: 0.25)
         let flashOff = SKAction.colorize(withColorBlendFactor: 0.0, duration: 0.25)
         return .sequence([flashOn, flashOff])
         
