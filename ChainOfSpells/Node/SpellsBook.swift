@@ -33,14 +33,14 @@ class SpellsBook: SKNode {
 		addChild(bg)
 
 		// Tombol close
-		let close = SKLabelNode(text: "Close")
+		let close = SKLabelNode(text: "X")
 		close.name = "closeSpellbook"
 		close.fontName = fontName
 		close.fontSize = 18
 		close.fontColor = .yellow
 		close.horizontalAlignmentMode = .right
 		close.verticalAlignmentMode = .top
-		close.position = CGPoint(x: bg.size.width / 2 - 20, y: bg.size.height / 2 - 20)
+		close.position = CGPoint(x: bg.size.width / 2 - 25, y: bg.size.height / 2 - 25)
 		close.zPosition = 2
 		bg.addChild(close)
 
@@ -62,13 +62,13 @@ class SpellsBook: SKNode {
 
 		// Halaman kiri: comboData1
 		let page1 = createPage1(content: comboData1, size: bg.size)
-		page1.position = .zero
+		page1.position = CGPoint(x: -frame.size.width / 2 + 40, y: 0)
 		page1.zPosition = 2
 		bg.addChild(page1)
 
 		// Halaman kanan: comboData2
 		let page2 = createPage2(content: comboData2, size: bg.size)
-		page2.position = CGPoint(x: 260, y: 0)
+		page2.position = CGPoint(x: 300, y: 0)
 		page2.zPosition = 2
 		bg.addChild(page2)
 	}

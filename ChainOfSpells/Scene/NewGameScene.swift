@@ -18,6 +18,7 @@ class NewGameScene: SKScene {
     private let cardBackTexture = SKTexture(imageNamed: "back-card")
     private let spellBookTexture = SKTexture(imageNamed: "spell_book")
     private var chainEffectNodes: [SKNode] = []
+	private let remainingLabel = SKLabelNode(fontNamed: fontName)
 
 
     private var deckNode: SKSpriteNode!
@@ -160,15 +161,21 @@ class NewGameScene: SKScene {
 
     private func setupDeckNode() {
         deckNode = SKSpriteNode(texture: spellBookTexture)
-        deckNode.position = CGPoint(x: frame.midX + 350, y: frame.midY - 130)
+        deckNode.position = CGPoint(x: frame.midX + 350, y: frame.midY - 115)
         deckNode.scale(to: frame.size, width: false, multiplier: 0.3)
 //        scaleCard(deckNode)
         addChild(deckNode)
 
-        deckCountLabel.fontSize = 24
+        deckCountLabel.fontSize = 20
         deckCountLabel.fontColor = .white
-        deckCountLabel.position = CGPoint(x: deckNode.position.x, y: deckNode.position.y + 50)
+        deckCountLabel.position = CGPoint(x: deckNode.position.x, y: deckNode.position.y - 50)
         addChild(deckCountLabel)
+		
+		remainingLabel.text = "Remaining Spells"
+		remainingLabel.fontSize = 14
+		remainingLabel.fontColor = .white
+		remainingLabel.position = CGPoint(x: deckNode.position.x, y: deckCountLabel.position.y - 14)
+		addChild(remainingLabel)
     }
 
     // MARK: - Buttons Setup
@@ -337,7 +344,7 @@ class NewGameScene: SKScene {
         addChild(comboBackground)
         comboBackground.isHidden = true
         comboInfoLabel.text = ""
-        comboInfoLabel.fontSize = 18
+        comboInfoLabel.fontSize = 16
         comboInfoLabel.fontColor = UIColor(named: "CardTextColor")
 //        comboInfoLabel.horizontalAlignmentMode = .left
         comboInfoLabel.position = CGPoint(x: comboBackground.position.x, y: comboBackground.position.y - 5)
