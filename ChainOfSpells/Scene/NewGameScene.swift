@@ -92,6 +92,7 @@ class NewGameScene: SKScene {
     private var momentum: Int = 0
     private var momentumMultiplier: Int = 1
     private var lastMomentumElement: Element? = nil
+    private var momentumIcon: SKSpriteNode!
     
     //rework attack
     private var currentAttackDamage: Int = 0
@@ -330,17 +331,24 @@ class NewGameScene: SKScene {
 
     // MARK: - Labels Setup
     private func setupLabels() {
-        // Momentum Bar - top
-        momentumLabel.text = "x\(momentumMultiplier)"
-        momentumLabel.fontSize = 18
-        momentumLabel.fontColor = .white
-        momentumLabel.horizontalAlignmentMode = .left
-        momentumLabel.position = CGPoint(x: momentumBar.position.x + 35, y: frame.minY + 117)
+        // Momentum Bar - top double declaration
+//        momentumLabel.text = "x\(momentumMultiplier)"
+//        momentumLabel.fontSize = 18
+//        momentumLabel.fontColor = .white
+//        momentumLabel.horizontalAlignmentMode = .left
+//        momentumLabel.position = CGPoint(x: momentumBar.position.x + 35, y: frame.minY + 117)
         
         momentumBar.position = CGPoint(x: 18, y: frame.minY + 120)
         momentumBar.scale(to: frame.size, width: false, multiplier: 0.07)
         addChild(momentumLabel)
         addChild(momentumBar)
+        
+        // adding momentum icon
+        momentumIcon = SKSpriteNode()
+        momentumIcon.position = CGPoint(x: momentumBar.position.x, y: momentumBar.position.y)
+        momentumIcon.size = CGSize(width: 20, height: 20) // Adjust size of icon
+        addChild(momentumIcon)
+
         
         // Discard left label below chances - middle
         discardLeftLabel.text = "x\(discardLeft)"
@@ -372,7 +380,15 @@ class NewGameScene: SKScene {
 		momentumLabel.fontSize = 18
 		momentumLabel.fontColor = .white
 		momentumLabel.horizontalAlignmentMode = .center
-		momentumLabel.position = CGPoint(x: 100, y: frame.midY - 180)
+        momentumLabel.position = CGPoint(x: momentumBar.position.x + 35, y: momentumBar.position.y - 4)
+        
+        // Momentum multi label
+        momentumMultiplierLabel.text = ""
+        momentumMultiplierLabel.fontSize = 12
+        momentumMultiplierLabel.fontColor = .white
+        momentumMultiplierLabel.position = CGPoint(x: momentumBar.position.x, y: momentumBar.position.y - 4)
+        momentumMultiplierLabel.zPosition = 10
+        addChild(momentumMultiplierLabel)
         
         comboBackground.position =  CGPoint(x: frame.midX, y: attackButton.position.y + 40)
         comboBackground.scale(to: frame.size, width: true, multiplier: 0.20)
@@ -739,7 +755,8 @@ class NewGameScene: SKScene {
             let currentElement = selectedElements[0]
             
             if lastMomentumElement == nil {
-                // FIRST ELEMENT EVER - Always add 25
+                // FIRST TIME: Set element & show icon
+                lastMomentumElement = currentElement
                 momentum = 25 * playedCards.count
             }
             else if currentElement == lastMomentumElement {
@@ -750,14 +767,15 @@ class NewGameScene: SKScene {
                 // DIFFERENT ELEMENT - Reset to 0
                 momentum = 0
                 momentumMultiplier = 1
+                lastMomentumElement = nil
             }
-            
-            lastMomentumElement = currentElement
         } else {
             momentum = 0
             momentumMultiplier = 1
             lastMomentumElement = nil
         }
+        
+        updateMomentumElementImage()
         
         let levelsGained = momentum / 100
         if levelsGained > 0 {
@@ -875,6 +893,20 @@ class NewGameScene: SKScene {
         }
         run(.sequence([delay, callTransition]))
 
+    }
+    
+    // MARK: Update Momentum
+    private func updateMomentumElementImage() {
+        if let element = lastMomentumElement {
+            let textureName = "momentum-\(element.rawValue)"
+            momentumIcon.texture = SKTexture(imageNamed: textureName)
+            momentumIcon.isHidden = false
+            print("Momentum Element: \(element)")
+        } else {
+            momentumIcon.texture = nil
+            momentumIcon.isHidden = true
+            print("No Momentum Element")
+        }
     }
 
     private func handleDiscard() {
