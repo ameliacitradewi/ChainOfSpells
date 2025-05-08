@@ -43,7 +43,7 @@ class NewGameScene: SKScene {
 
     // MARK: Labels & State
     private let victoryLabel = SKLabelNode(fontNamed: fontName)
-    private var attackChances = 4
+    private var playerHp = 10
     private let chancesLabel = SKLabelNode(fontNamed: fontName)
     private var discardLeft = 3
     private let discardLeftLabel = SKLabelNode(fontNamed: fontName)
@@ -61,8 +61,12 @@ class NewGameScene: SKScene {
     
     // UI
     private var background = SKSpriteNode(imageNamed: "")
-    private let playerHp = SKSpriteNode(imageNamed: "player_hp")
+    private let playerHpNode = SKSpriteNode(imageNamed: "player_hp")
     private let playerDiscard = SKSpriteNode(imageNamed: "player_discard")
+    
+    // Chain Effect
+    private var playerChainEffect : ChainEffect?
+    private var enemyChainEffect : ChainEffect?
 
     
     // MARK: - Lifecycle
@@ -265,15 +269,15 @@ class NewGameScene: SKScene {
 
     // MARK: - Labels Setup
     private func setupLabels() {
-        chancesLabel.text = "x\(attackChances)"
+        chancesLabel.text = "x\(playerHp)"
         chancesLabel.fontSize = 24
         chancesLabel.fontColor = .white
         chancesLabel.horizontalAlignmentMode = .left
         chancesLabel.position = CGPoint(x: 70, y: frame.height/2 - 130)
-        playerHp.position = CGPoint(x: 50, y: frame.height/2 - 120)
-        playerHp.scale(to: frame.size, width: false, multiplier: 0.1)
+        playerHpNode.position = CGPoint(x: 50, y: frame.height/2 - 120)
+        playerHpNode.scale(to: frame.size, width: false, multiplier: 0.1)
         addChild(chancesLabel)
-        addChild(playerHp)
+        addChild(playerHpNode)
         
         // Discard left label below chances
         discardLeftLabel.text = "x\(discardLeft)"
@@ -777,12 +781,24 @@ class NewGameScene: SKScene {
                 }
                 let elementSet = Set(elements)
                 switch elementSet {
-                case [.fire, .water], [.water, .fire]: return ("Steam", 1.1, combo)
-                case [.earth, .wind], [.wind, .earth]: return ("Sandstorm", 1.1, combo)
-                case [.fire, .wind], [.wind, .fire]: return ("Heat", 1.2, combo)
-                case [.fire, .earth], [.earth, .fire]: return ("Lava", 1.2, combo)
-                case [.water, .wind], [.wind, .water]: return ("Storm", 1.2, combo)
-                case [.water, .earth], [.earth, .water]: return ("Nature", 1.2, combo)
+                case [.fire, .water], [.water, .fire]: do {
+                    return ("Steam", 1, combo)
+                }
+                case [.earth, .wind], [.wind, .earth]: do {
+                    return ("Sandstorm", 1, combo)
+                }
+                case [.fire, .wind], [.wind, .fire]: do {
+                    return ("Burn", 1, combo)
+                }
+                case [.fire, .earth], [.earth, .fire]: do {
+                    return ("Explosion", 1, combo)
+                }
+                case [.water, .wind], [.wind, .water]: do {
+                    return ("Storm", 1, combo)
+                }
+                case [.water, .earth], [.earth, .water]: do {
+                    return ("Nature", 1, combo)
+                }
                 default: break
                 }
             }
@@ -907,6 +923,15 @@ class NewGameScene: SKScene {
         glow.run(pulse)
     }
     
+    // Enemy Attack
+    private func enemyAttack() {
+        let attackValue = Int.random(in: 10...30)
+        let damage : Double = Double(playerHp) * Double(attackValue) / 100
+        print("ATTACK VALUE : \(attackValue)")
+        print("DAMAGE VALUE : \(damage)")
+        playerHp = playerHp - Int(damage)
+    }
+    
     // MARK: – Animate Hand Transition after Attack
     private func animateHandTransitionAfterAttack() {
         isAnimating = true
@@ -971,10 +996,10 @@ class NewGameScene: SKScene {
                     return
                 }
                 self.shakeBackground(duration: shakeDur)
-                self.attackChances -= 1
-                self.chancesLabel.text = "x\(self.attackChances)"
+                enemyAttack()
+                self.chancesLabel.text = "x\(self.playerHp)"
                 run(enemyAttackSound)
-                if self.attackChances <= 0 && self.bossHealth > 0 {
+                if self.playerHp <= 0 && self.bossHealth > 0 {
                     showGameOver()
                 }
 

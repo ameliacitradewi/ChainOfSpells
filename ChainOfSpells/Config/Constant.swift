@@ -23,6 +23,12 @@ enum Element: String, CaseIterable, Codable {
         }
     }
 }
+
+
+enum ChainEffect : String, Codable {
+    case burn, explosion, mist, critical, regeneration, damageReduction
+}
+
 /// String
 var fontName : String = "AlmendraSC-Regular"
 var cardFontName : String = "AlmendraSC-Regular"
