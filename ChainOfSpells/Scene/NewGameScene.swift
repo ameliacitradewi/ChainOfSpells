@@ -26,6 +26,7 @@ class NewGameScene: SKScene {
     private let discardButton = SKSpriteNode(imageNamed: "btn-discard")
     private var playAreaCards = [CardNode]()
     private var selectedCards = [CardNode]()
+    private var playedCards = [CardNode]()
 
     private let playAreaPadding: CGFloat = 4
     private var playAreaPosition: CGPoint { CGPoint(x: frame.midX, y: frame.midY - 130) }
@@ -44,7 +45,9 @@ class NewGameScene: SKScene {
     // MARK: Labels & State
     private let victoryLabel = SKLabelNode(fontNamed: fontName)
     private var playerHp = 10
-    private let chancesLabel = SKLabelNode(fontNamed: fontName)
+    private var playerMaxHp = 10
+
+    private let playerHpLabel = SKLabelNode(fontNamed: fontName)
     private var discardLeft = 3
     private let discardLeftLabel = SKLabelNode(fontNamed: fontName)
     private let comboBackground = SKSpriteNode(imageNamed: "combo-bg")
@@ -63,10 +66,11 @@ class NewGameScene: SKScene {
     private var background = SKSpriteNode(imageNamed: "")
     private let playerHpNode = SKSpriteNode(imageNamed: "player_hp")
     private let playerDiscard = SKSpriteNode(imageNamed: "player_discard")
-    
+    private let statusLabel = SKLabelNode(fontNamed: fontName)
+
     // Chain Effect
-    private var playerChainEffect : ChainEffect?
-    private var enemyChainEffect : ChainEffect?
+    private var playerChainEffects : [ChainEffectModel] = []
+    private var enemyChainEffect : ChainEffectModel?
     // Add momentum variables
     private var momentum: Int = 0
     private var momentumMultiplier: Int = 0
@@ -74,6 +78,8 @@ class NewGameScene: SKScene {
     
     //rework attack
     private var currentAttackDamage: Int = 0
+    
+    
 
     
     // MARK: - Lifecycle
@@ -276,14 +282,14 @@ class NewGameScene: SKScene {
 
     // MARK: - Labels Setup
     private func setupLabels() {
-        chancesLabel.text = "x\(playerHp)"
-        chancesLabel.fontSize = 24
-        chancesLabel.fontColor = .white
-        chancesLabel.horizontalAlignmentMode = .left
-        chancesLabel.position = CGPoint(x: 70, y: frame.height/2 - 130)
+        playerHpLabel.text = "\(playerHp)/\(playerMaxHp)"
+        playerHpLabel.fontSize = 24
+        playerHpLabel.fontColor = .white
+        playerHpLabel.horizontalAlignmentMode = .left
+        playerHpLabel.position = CGPoint(x: 70, y: frame.height/2 - 130)
         playerHpNode.position = CGPoint(x: 50, y: frame.height/2 - 120)
         playerHpNode.scale(to: frame.size, width: false, multiplier: 0.1)
-        addChild(chancesLabel)
+        addChild(playerHpLabel)
         addChild(playerHpNode)
         
         // Discard left label below chances
@@ -291,8 +297,8 @@ class NewGameScene: SKScene {
         discardLeftLabel.fontSize = 24
         discardLeftLabel.fontColor = .white
         discardLeftLabel.horizontalAlignmentMode = .left
-        discardLeftLabel.position = CGPoint(x: 70, y: chancesLabel.position.y - 40)
-        playerDiscard.position = CGPoint(x: 50, y: chancesLabel.position.y - 30)
+        discardLeftLabel.position = CGPoint(x: 70, y: playerHpLabel.position.y - 40)
+        playerDiscard.position = CGPoint(x: 50, y: playerHpLabel.position.y - 30)
         playerDiscard.scale(to: frame.size, width: false, multiplier: 0.1)
         addChild(playerDiscard)
         addChild(discardLeftLabel)
@@ -308,6 +314,17 @@ class NewGameScene: SKScene {
 //        comboInfoLabel.horizontalAlignmentMode = .left
 		comboInfoLabel.position = CGPoint(x: comboBackground.position.x, y: comboBackground.position.y - 5)
         addChild(comboInfoLabel)
+        
+        statusLabel.text = ""
+        statusLabel.fontSize = 100
+        statusLabel.fontColor = .green
+        statusLabel.position = CGPoint(x: frame.midX, y: frame.midY)
+        statusLabel.zPosition = 20
+        statusLabel.setScale(0)
+
+        addChild(statusLabel)
+        statusLabel.isHidden = true
+       
     }
 
     // MARK: - Touch Handling
@@ -492,12 +509,21 @@ class NewGameScene: SKScene {
     
     private func cardAttackAnimation() {
         guard !selectedCards.isEmpty else { return }
+        let unusedCards  = selectedCards.filter{ !playedCards.contains($0) }
         let positions = selectedCards.map { $0.originalPosition }
-        selectedCards.forEach { card in
+        unusedCards.forEach { card in
+            discardPile.append(CardModel(element: card.element, value: card.attackValue))
+            let move = SKAction.group([.moveBy(x: 0, y: -500, duration: 0.5), .fadeOut(withDuration: 0.3)])
+            card.run(.sequence([move, .removeFromParent()]))
+        }
+        playedCards.forEach { card in
             discardPile.append(CardModel(element: card.element, value: card.attackValue))
             let move = SKAction.group([.moveBy(x: 0, y: 500, duration: 0.5), .fadeOut(withDuration: 0.3)])
             card.run(.sequence([move, .removeFromParent()]))
         }
+        
+     
+
 
     }
     
@@ -604,10 +630,11 @@ class NewGameScene: SKScene {
         guard !selectedCards.isEmpty else { return }
 
         let (name, mult, comboCards) = evaluateCombo(for: selectedCards)
+        playedCards = comboCards
         let base = comboCards.reduce(0) { $0 + $1.attackValue }
         
         // Momentum Logic
-        let selectedElements = selectedCards.map { $0.element }
+        let selectedElements = playedCards.map { $0.element }
         guard let firstElement = selectedElements.first else { return }
         let allSame = selectedElements.allSatisfy { $0 == firstElement }
         
@@ -616,11 +643,11 @@ class NewGameScene: SKScene {
             
             if lastMomentumElement == nil {
                 // FIRST ELEMENT EVER - Always add 25
-                momentum = 25 * selectedCards.count
+                momentum = 25 * playedCards.count
             }
             else if currentElement == lastMomentumElement {
                 // SAME ELEMENT - Accumulate
-                momentum += 25 * selectedCards.count
+                momentum += 25 * playedCards.count
             }
             else {
                 // DIFFERENT ELEMENT - Reset to 0
@@ -632,6 +659,8 @@ class NewGameScene: SKScene {
             momentum = 0
             lastMomentumElement = nil
         }
+        
+        
         print("Current Momentum: \(momentum)")
         
         let levelsGained = momentum / 100
@@ -643,6 +672,99 @@ class NewGameScene: SKScene {
         
         currentAttackDamage = Int(Double(base) * mult * (1 + Double(momentumMultiplier)))
         print("Attack: \(name) ×\(mult) → Combo Cards: \(comboCards.map { $0.attackValue }), Damage = \(currentAttackDamage)")
+        
+        // Player Chain Effect Calculation
+        if !playerChainEffects.isEmpty{
+            playerChainEffects.forEach {
+                switch $0.type {
+                case .burn: do {
+                    
+                }
+                case .explosion: do {
+                    switch $0.level {
+                    case .base: do {
+                        currentAttackDamage = Int(Double(currentAttackDamage) * 1.2)
+                        
+                    }
+                    case .strong: do {
+                        currentAttackDamage = Int(Double(currentAttackDamage) * 1.4)
+                    }
+                    case .enemy: do {
+                        currentAttackDamage = Int(Double(currentAttackDamage) * 1.2)
+                    }
+                    }
+                    statusLabel.isHidden = false
+                    statusLabel.text = "EXPLOSION!"
+                    statusLabel.run(.sequence([.unhide(), .scale(to: 1.2, duration: 0.5), .scale(to: 0.9, duration: 0.2), .scale(to: 1.0, duration: 0.2),.hide()]))
+                }
+                case .mist: do {
+                    
+                }
+                case .critical: do {
+                    switch $0.level {
+                    case .base: do {
+                        let randomNumber = Int.random(in: 1...100)
+                        switch randomNumber {
+                        case 1...20: do {
+                            currentAttackDamage *= 2
+                            statusLabel.text = "CRITICAL!"
+                            statusLabel.run(.sequence([.unhide(), .scale(to: 1.2, duration: 0.5), .scale(to: 0.9, duration: 0.2), .scale(to: 1.0, duration: 0.2),.hide()]))
+                        }
+                        default:
+                            break
+                        }
+                    }
+                        
+                    case .strong: do {
+                        let randomNumber = Int.random(in: 1...100)
+                        switch randomNumber {
+                        case 1...40: do {
+                            currentAttackDamage *= 2
+                            statusLabel.text = "CRITICAL!"
+                            statusLabel.run(.sequence([.unhide(), .scale(to: 1.2, duration: 0.5), .scale(to: 0.9, duration: 0.2), .scale(to: 1.0, duration: 0.2),.hide()]))
+                        }
+                        default:
+                            break
+                        }
+                    }
+                    case .enemy: do {
+                        let randomNumber = Int.random(in: 1...100)
+                        switch randomNumber {
+                        case 1...20: do {
+                            currentAttackDamage *= 2
+                            statusLabel.text = "CRITICAL!"
+                            statusLabel.run(.sequence([.unhide(), .scale(to: 1.2, duration: 0.5), .scale(to: 0.9, duration: 0.2), .scale(to: 1.0, duration: 0.2),.hide()]))
+                        }
+                        default:
+                            break
+                        }
+                    }
+                    }
+                }
+                case .regeneration: do {
+                    switch $0.level {
+                    case .base: do {
+                        let regen = Int(Double(playerMaxHp) * 0.1)
+                        playerHp += regen
+                    }
+                        
+                    case .strong: do {
+                        let regen = Int(Double(playerMaxHp) * 0.15)
+                        playerHp += regen
+                    }
+                    case .enemy: do {
+                        let regen = Int(Double(playerMaxHp) * 0.1)
+                        playerHp += regen
+                    }
+                    }
+                    playerHpLabel.text = "\(playerHp)/\(playerMaxHp)"
+                }
+                case .damageReduction: do {
+                    
+                }
+                }            }
+           
+        }
         
         guard bossHealth > 0 else { return }
         
@@ -791,16 +913,22 @@ class NewGameScene: SKScene {
                 // Check for two 2-card pairs forming a known combo twice
                 let sortedElements = elements.sorted()
                 if sortedElements == [.fire, .fire, .wind, .wind] || sortedElements == [.wind, .wind, .fire, .fire] {
+                    playerChainEffects.append(ChainEffectModel(type: .burn, remainingTurn: 2, level: .strong))
                     return ("Strong Burn", 1, combo)
                 } else if sortedElements == [.fire, .fire, .water, .water] || sortedElements == [.water, .water, .fire, .fire] {
+                    playerChainEffects.append(ChainEffectModel(type: .mist, remainingTurn: 2, level: .strong))
                     return ("Strong Mist", 1, combo)
                 } else if sortedElements == [.earth, .earth, .wind, .wind] || sortedElements == [.wind, .wind, .earth, .earth] {
+                    playerChainEffects.append(ChainEffectModel(type: .damageReduction, remainingTurn: 2, level: .strong))
                     return ("Strong Sandstorm", 1, combo)
                 } else if sortedElements == [.fire, .fire, .earth, .earth] || sortedElements == [.earth, .earth, .fire, .fire] {
+                    playerChainEffects.append(ChainEffectModel(type: .explosion, remainingTurn: 1, level: .strong))
                     return ("Strong Explosion", 1, combo)
                 } else if sortedElements == [.water, .water, .wind, .wind] || sortedElements == [.wind, .wind, .water, .water] {
+                    playerChainEffects.append(ChainEffectModel(type: .critical, remainingTurn: 2, level: .strong))
                     return ("Strong Storm", 1, combo)
                 } else if sortedElements == [.water, .water, .earth, .earth] || sortedElements == [.earth, .earth, .water, .water] {
+                    playerChainEffects.append(ChainEffectModel(type: .regeneration, remainingTurn: 2, level: .strong))
                     return ("Strong Nature", 1, combo)
                 }
             }
@@ -819,6 +947,14 @@ class NewGameScene: SKScene {
 
         // Reject 4-card hands with no duplicates (no possible combo)
         if cards.count >= 4 {
+            let uniqueElements = Set(allElements)
+            if uniqueElements.count == cards.count {
+                let highestCard = cards.max(by: { $0.attackValue < $1.attackValue })!
+                return ("Basic Spell", 1.0, [highestCard])
+            }
+        }
+        // Reject 3-card hands with no duplicates (no possible combo)
+        if cards.count >= 3 {
             let uniqueElements = Set(allElements)
             if uniqueElements.count == cards.count {
                 let highestCard = cards.max(by: { $0.attackValue < $1.attackValue })!
@@ -844,21 +980,27 @@ class NewGameScene: SKScene {
 
                 switch elementSet {
                 case [.fire, .water], [.water, .fire]: do {
+                    playerChainEffects.append(ChainEffectModel(type: .mist, remainingTurn: 2, level: .base))
                     return ("Mist", 1, combo)
                 }
                 case [.earth, .wind], [.wind, .earth]: do {
+                    playerChainEffects.append(ChainEffectModel(type: .damageReduction, remainingTurn: 2, level: .base))
                     return ("Sandstorm", 1, combo)
                 }
                 case [.fire, .wind], [.wind, .fire]: do {
+                    playerChainEffects.append(ChainEffectModel(type: .burn, remainingTurn: 2, level: .base))
                     return ("Burn", 1, combo)
                 }
                 case [.fire, .earth], [.earth, .fire]: do {
+                    playerChainEffects.append( ChainEffectModel(type: .explosion, remainingTurn: 1, level: .base))
                     return ("Explosion", 1, combo)
                 }
                 case [.water, .wind], [.wind, .water]: do {
+                    playerChainEffects.append(ChainEffectModel(type: .critical, remainingTurn: 2, level: .base))
                     return ("Storm", 1, combo)
                 }
                 case [.water, .earth], [.earth, .water]: do {
+                    playerChainEffects.append(ChainEffectModel(type: .regeneration, remainingTurn: 1, level: .base))
                     return ("Nature", 1, combo)
                 }
                 default: break
@@ -880,6 +1022,14 @@ class NewGameScene: SKScene {
             let element = array[index]
             let subArray = Array(array[(index + 1)...])
             return combinations(of: subArray, size: size - 1).map { [element] + $0 }
+        }
+    }
+    
+    func updatePlayerChainEffects() {
+        playerChainEffects = playerChainEffects.compactMap { effect in
+            var updatedEffect = effect
+            updatedEffect.remainingTurn -= 1
+            return updatedEffect.remainingTurn > 0 ? updatedEffect : nil
         }
     }
     
@@ -988,9 +1138,12 @@ class NewGameScene: SKScene {
     // Enemy Attack
     private func enemyAttack() {
         let attackValue = Int.random(in: 10...30)
-        let damage : Double = Double(playerHp) * Double(attackValue) / 100
+        let damage : Double = Double(playerMaxHp) * Double(attackValue) / 100
         print("ATTACK VALUE : \(attackValue)")
         print("DAMAGE VALUE : \(damage)")
+        
+        
+        
         playerHp = playerHp - Int(damage)
     }
     
@@ -1060,7 +1213,7 @@ class NewGameScene: SKScene {
                 }
                 self.shakeBackground(duration: shakeDur)
                 enemyAttack()
-                self.chancesLabel.text = "x\(self.playerHp)"
+                self.playerHpLabel.text = "\(self.playerHp)/\(self.playerMaxHp)"
                 run(enemyAttackSound)
                 if self.playerHp <= 0 && self.bossHealth > 0 {
                     showGameOver()
@@ -1096,8 +1249,8 @@ class NewGameScene: SKScene {
                 self.updateDeckCount()
                 self.updateButtonVisibility()
                 self.isAnimating = false
+                updatePlayerChainEffects()
             }
-
         ]))
     }
     

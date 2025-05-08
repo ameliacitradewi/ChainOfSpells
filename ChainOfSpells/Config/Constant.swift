@@ -28,8 +28,12 @@ enum Element: String, CaseIterable, Codable,Comparable {
 }
 
 
-enum ChainEffect : String, Codable {
+enum ChainEffectType : String, Codable {
     case burn, explosion, mist, critical, regeneration, damageReduction
+}
+
+enum ChainEffectLevel : String, Codable {
+    case base, strong, enemy
 }
 
 /// String
