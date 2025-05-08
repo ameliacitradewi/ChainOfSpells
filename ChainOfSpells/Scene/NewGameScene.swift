@@ -63,6 +63,11 @@ class NewGameScene: SKScene {
     private var background = SKSpriteNode(imageNamed: "")
     private let playerHp = SKSpriteNode(imageNamed: "player_hp")
     private let playerDiscard = SKSpriteNode(imageNamed: "player_discard")
+    
+    // Add momentum variables
+    private var momentum: Int = 0
+    private var momentumMultiplier: Int = 0
+    private var lastMomentumElement: Element? = nil
 
     
     // MARK: - Lifecycle
@@ -597,6 +602,40 @@ class NewGameScene: SKScene {
         let total = Int(Double(base) * mult)
         print("Attack: \(name) ×\(mult) → Combo Cards: \(comboCards.map { $0.attackValue }), Damage = \(total)")
         
+        // Momentum Logic
+        let selectedElements = selectedCards.map { $0.element }
+        guard let firstElement = selectedElements.first else { return }
+        let allSame = selectedElements.allSatisfy { $0 == firstElement }
+        
+        if allSame {
+            let currentElement = selectedElements[0]
+            
+            if lastMomentumElement == nil {
+                // FIRST ELEMENT EVER - Always add 25
+                momentum = 25 * selectedCards.count
+            }
+            else if currentElement == lastMomentumElement {
+                // SAME ELEMENT - Accumulate
+                momentum += 25 * selectedCards.count
+            }
+            else {
+                // DIFFERENT ELEMENT - Reset to 0
+                momentum = 0
+            }
+            
+            lastMomentumElement = currentElement
+        } else {
+            momentum = 0
+            lastMomentumElement = nil
+        }
+        print("Current Momentum: \(momentum)")
+        
+        let levelsGained = momentum / 100
+        if levelsGained > 0 {
+            momentumMultiplier += levelsGained
+            momentum %= 100  // Carry over excess momentum
+            print("Momentum Multiplier: \(momentumMultiplier)")
+        }
         
         guard bossHealth > 0 else { return }
         
@@ -740,7 +779,7 @@ class NewGameScene: SKScene {
                 let elements = combo.map { $0.element }
                 let elementCounts = Dictionary(grouping: elements, by: { $0 }).mapValues { $0.count }
                 if elementCounts.values.contains(4) {
-                    return ("Quad Spell", 2.5, combo)
+                    return ("Chain of Spells", 3, combo)
                 }
                 if Set(elements).count == 4 && allValues.filter({ $0 == combo[0].attackValue }).count == 4 {
                     return ("Harmony", 2.0, combo)
@@ -754,7 +793,7 @@ class NewGameScene: SKScene {
                 let elements = combo.map { $0.element }
                 let elementCounts = Dictionary(grouping: elements, by: { $0 }).mapValues { $0.count }
                 if elementCounts.values.contains(3) {
-                    return ("Triple Spell", 2.0, combo)
+                    return ("Chain of Spells", 2.0, combo)
                 }
                 if Set(elements).count == 3 && combo.map({ $0.attackValue }).allEqual() {
                     return ("Synergy", 2.2, combo)
@@ -769,7 +808,7 @@ class NewGameScene: SKScene {
                 let values = combo.map { $0.attackValue }
                 
                 if elements[0] == elements[1] {
-                    return ("Double Spell", 1.5, combo)
+                    return ("Chain of Spells", 1.5, combo)
                 }
                 
                 if values[0] == values[1] {
