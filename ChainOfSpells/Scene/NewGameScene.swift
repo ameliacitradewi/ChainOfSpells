@@ -73,10 +73,10 @@ class NewGameScene: SKScene {
     
     // UI
     private var background = SKSpriteNode(imageNamed: "")
-    private let playerHpNode = SKSpriteNode(imageNamed: "player_hp")
-    private let playerDiscard = SKSpriteNode(imageNamed: "player_discard")
+    private let playerHpNode = SKSpriteNode(imageNamed: "player-hp")
+    private let playerDiscard = SKSpriteNode(imageNamed: "discard-card")
     private let statusLabel = SKLabelNode(fontNamed: fontName)
-    private let momentumBar = SKSpriteNode(imageNamed: "player-hp")
+    private let momentumBar = SKSpriteNode(imageNamed: "momentum")
 
 
     // Chain Effect
@@ -295,63 +295,52 @@ class NewGameScene: SKScene {
 
     // MARK: - Labels Setup
     private func setupLabels() {
-        // Health
+        // Momentum Bar - top
+        momentumLabel.text = "x\(momentumMultiplier)"
+        momentumLabel.fontSize = 18
+        momentumLabel.fontColor = .white
+        momentumLabel.horizontalAlignmentMode = .left
+        momentumLabel.position = CGPoint(x: momentumBar.position.x + 35, y: frame.minY + 117)
+        
+        momentumBar.position = CGPoint(x: 18, y: frame.minY + 120)
+        momentumBar.scale(to: frame.size, width: false, multiplier: 0.07)
+        addChild(momentumLabel)
+        addChild(momentumBar)
+        
+        // Discard left label below chances - middle
+        discardLeftLabel.text = "x\(discardLeft)"
+        discardLeftLabel.fontSize = 18
+        discardLeftLabel.fontColor = .white
+        discardLeftLabel.horizontalAlignmentMode = .left
+        discardLeftLabel.position = CGPoint(x: playerDiscard.position.x + 35, y: frame.minY + 80)
+        
+        playerDiscard.position = CGPoint(x: 18, y: frame.minY + 85)
+        playerDiscard.scale(to: frame.size, width: false, multiplier: 0.09)
+        addChild(playerDiscard)
+        addChild(discardLeftLabel)
+
+        // HP Player Bar - bottom
         playerHpLabel.text = "\(playerHp)/\(playerMaxHp)"
         playerHpLabel.fontSize = 18
         playerHpLabel.fontColor = .white
         playerHpLabel.horizontalAlignmentMode = .left
-        playerHpLabel.position = CGPoint(x: 30, y: frame.midY - 180)
-        playerHpNode.position = CGPoint(x: 50, y: frame.minY + 90)
-        playerHpNode.scale(to: frame.size, width: false, multiplier: 0.1)
+        playerHpLabel.position = CGPoint(x: playerHpNode.position.x + 35, y: frame.minY + 43)
+        
+        playerHpNode.position = CGPoint(x: 18, y: frame.minY + 50)
+        playerHpNode.scale(to: frame.size, width: false, multiplier: 0.06)
         addChild(playerHpLabel)
         addChild(playerHpNode)
-		
-		
-	
-		
-		// Momentum Bar
-        momentumLabel.text = "\(momentum)"
-		momentumLabel.fontSize = 18
-		momentumLabel.fontColor = .white
-		momentumLabel.horizontalAlignmentMode = .center
-		momentumLabel.position = CGPoint(x: 100, y: frame.midY - 180)
         
-        momentumMultiplierLabel.text = "x\(momentumMultiplier)"
-        momentumMultiplierLabel.fontSize = 18
-        momentumMultiplierLabel.fontColor = .white
-        momentumMultiplierLabel.horizontalAlignmentMode = .center
-		
-		momentumBar.position = CGPoint(x: 100, y: frame.minY + 90)
-        momentumMultiplierLabel.position = CGPoint(x: momentumBar.position.x, y: momentumBar.position.y + 60)
-		momentumBar.scale(to: frame.size, width: false, multiplier: 0.30)
-		addChild(momentumLabel)
-		addChild(momentumBar)
-        addChild(momentumMultiplierLabel)
-
-        // Discard left label below chances
-        discardLeftLabel.text = "\(discardLeft)"
-        discardLeftLabel.fontSize = 18
-        discardLeftLabel.fontColor = .white
-        discardLeftLabel.horizontalAlignmentMode = .left
-        discardLeftLabel.position = CGPoint(x: 70, y: playerHpLabel.position.y - 40)
-        playerDiscard.scale(to: frame.size, width: false, multiplier: 0.1)
-		discardLeftLabel.horizontalAlignmentMode = .center
-        discardLeftLabel.position = CGPoint(x: 150, y: frame.midY - 180)
-		
-		playerDiscard.position = CGPoint(x: 150, y: frame.minY + 90)
-        addChild(playerDiscard)
-        addChild(discardLeftLabel)
-        
-		comboBackground.position =  CGPoint(x: frame.midX, y: attackButton.position.y + 40)
+        comboBackground.position =  CGPoint(x: frame.midX, y: attackButton.position.y + 40)
         comboBackground.scale(to: frame.size, width: true, multiplier: 0.20)
-		comboBackground.zPosition = -1
+        comboBackground.zPosition = -1
         addChild(comboBackground)
         comboBackground.isHidden = true
         comboInfoLabel.text = ""
         comboInfoLabel.fontSize = 18
         comboInfoLabel.fontColor = UIColor(named: "CardTextColor")
 //        comboInfoLabel.horizontalAlignmentMode = .left
-		comboInfoLabel.position = CGPoint(x: comboBackground.position.x, y: comboBackground.position.y - 5)
+        comboInfoLabel.position = CGPoint(x: comboBackground.position.x, y: comboBackground.position.y - 5)
         addChild(comboInfoLabel)
         
         statusLabel.text = ""
@@ -1184,9 +1173,10 @@ class NewGameScene: SKScene {
         chainEffectNodes = []
         for (index, effect) in playerChainEffects.enumerated() {
             let containerNode = SKSpriteNode(imageNamed: "momentum")
-            let yPostion = (160 + CGFloat((index + 1)) * 45)
-            containerNode.position = CGPoint(x: 60, y: yPostion)
-            containerNode.size = CGSize(width: 50, height: 50)
+            let yPostion = (momentumBar.position.y + CGFloat((index + 1)) * 35)
+            containerNode.position = CGPoint(x: 18, y: yPostion)
+
+            containerNode.size = CGSize(width: 30, height: 30)
             containerNode.zPosition = 12
 
             var chainAsset = ""
@@ -1200,7 +1190,7 @@ class NewGameScene: SKScene {
             }
             print("CHAIN ASSET \(chainAsset)")
             let chainNode = SKSpriteNode(imageNamed: chainAsset)
-            chainNode.size = CGSize(width: 30, height: 30)
+            chainNode.size = CGSize(width: 20, height: 20)
             chainNode.position = CGPoint(x: 0, y: 0)
             chainNode.zPosition = 13
             containerNode.addChild(chainNode)
