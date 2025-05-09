@@ -30,9 +30,9 @@ class MainMenu: SKScene {
 	private func setupPlayButton() {
 		let label = SKLabelNode(text: "Play")
 		label.name = "play"
-		label.fontName = "AlmendraSC-Regular"
+        label.fontName = fontName
 		label.fontSize = 30
-		label.fontColor = .yellow
+		label.fontColor = .white
 		label.position = CGPoint(x: frame.midX, y: frame.midY - 120)
 //		label.zPosition = 1
 		addChild(label)

@@ -426,7 +426,7 @@ class NewGameScene: SKScene {
         addChild(comboInfoLabel)
         
         statusLabel.text = ""
-        statusLabel.fontSize = 50
+        statusLabel.fontSize = 30
         statusLabel.fontColor = .green
         statusLabel.position = CGPoint(x: frame.midX, y: frame.midY - 100)
         statusLabel.zPosition = 20
@@ -436,7 +436,7 @@ class NewGameScene: SKScene {
         statusLabel.isHidden = true
         
         enemyStatusLabel.text = ""
-        enemyStatusLabel.fontSize = 50
+        enemyStatusLabel.fontSize = 30
         enemyStatusLabel.fontColor = .red
         enemyStatusLabel.position = CGPoint(x: frame.midX, y: frame.midY + 100)
         enemyStatusLabel.zPosition = 20
@@ -913,6 +913,9 @@ class NewGameScene: SKScene {
                         playerHp += regen
                     }
                     }
+                    if playerHp > playerMaxHp {
+                        playerHp = playerMaxHp
+                    }
                     playerHpLabel.text = "\(playerHp)/\(playerMaxHp)"
                 }
                 case .damageReduction: do {
@@ -1122,7 +1125,7 @@ class NewGameScene: SKScene {
         
         victoryLabel.text = "Enemy Defeated!"
         victoryLabel.fontSize = 100
-        victoryLabel.fontColor = .yellow
+        victoryLabel.fontColor = .white
         victoryLabel.position = CGPoint(x: frame.midX, y: frame.midY)
         victoryLabel.zPosition = 20
         victoryLabel.setScale(0)
@@ -1664,6 +1667,9 @@ class NewGameScene: SKScene {
                 bossHealth += Int(regen)
             }
             }
+            if bossHealth > bossMaxHealth {
+                bossHealth = bossMaxHealth
+            }
             enemyStatusLabel.isHidden = false
             enemyStatusLabel.text = "REGENERATION!"
             enemyStatusLabel.run(.sequence([.unhide(), .scale(to: 1.2, duration: 0.5), .scale(to: 0.9, duration: 0.2), .scale(to: 1.0, duration: 0.2),.hide()]))
@@ -1671,6 +1677,9 @@ class NewGameScene: SKScene {
         }
         
         playerHp = playerHp - Int(damage)
+        if playerHp < 0 {
+            playerHp = 0
+        }
         if damage > 0 {
             return true
         } else {
