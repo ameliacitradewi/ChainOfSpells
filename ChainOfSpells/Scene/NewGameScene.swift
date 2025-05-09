@@ -42,6 +42,7 @@ class NewGameScene: SKScene {
     private var fullTexture: SKTexture!
     private let fullBarWidth: CGFloat = 200
     private let barHeight: CGFloat   = 30
+    private var turnsWithoutChainEffect: Int = 0
     private var bossHealthLabel = SKLabelNode()
     private var enemyChainEffectNode = SKSpriteNode(imageNamed: "momentum")
     private var enemyChainEffecTypeNode = SKSpriteNode(imageNamed: "chain_burn")
@@ -83,6 +84,8 @@ class NewGameScene: SKScene {
     private let playerHpNode = SKSpriteNode(imageNamed: "player-hp")
     private let playerDiscard = SKSpriteNode(imageNamed: "discard-card")
     private let statusLabel = SKLabelNode(fontNamed: fontName)
+    private let enemyStatusLabel = SKLabelNode(fontNamed: fontName)
+
     private let momentumBar = SKSpriteNode(imageNamed: "momentum")
 
     // Chain Effect
@@ -218,6 +221,8 @@ class NewGameScene: SKScene {
     private func setupBossHealthBar() {
         // 1) Enemy Chain Effect
         enemyChainEffectNode.position =  CGPoint(x: frame.midX - 115, y: frame.maxY - 30)
+        enemyChainEffectNode.zPosition = 11
+        enemyChainEffecTypeNode.zPosition = 12
         enemyChainEffectNode.size = CGSize(width: 30, height: 30)
         enemyChainEffecTypeNode.size = CGSize(width: 20, height: 20)
       
@@ -276,6 +281,24 @@ class NewGameScene: SKScene {
         
     }
     
+    private func updateEnemyChainEffect() {
+       
+      
+        if enemyChainEffect != nil{
+            enemyChainEffecTypeNode.isHidden = false
+            switch enemyChainEffect!.type   {
+            case .burn: enemyChainEffecTypeNode.texture = SKTexture(imageNamed: "chain_burn")
+            case .explosion: enemyChainEffecTypeNode.texture = SKTexture(imageNamed: "chain_explosion")
+            case .mist: enemyChainEffecTypeNode.texture = SKTexture(imageNamed: "chain_mist")
+            case .critical: enemyChainEffecTypeNode.texture = SKTexture(imageNamed: "chain_critical")
+            case .regeneration: enemyChainEffecTypeNode.texture = SKTexture(imageNamed: "chain_regeneration")
+            case .damageReduction:enemyChainEffecTypeNode.texture = SKTexture(imageNamed: "chain_damage_reduction")
+            }
+        } else{
+            enemyChainEffecTypeNode.isHidden = true
+        }
+    }
+    
     private func updateBossHealthBar() {
         // 1) Compute your health ratio (0…1)
         let ratio = max(0, min(1, CGFloat(bossHealth) / CGFloat(bossMaxHealth)))
@@ -312,17 +335,17 @@ class NewGameScene: SKScene {
     
     private func startBossIdleAnimation() {
         var idleFrames: [SKTexture] = []
-        let idleAtlas = SKTextureAtlas(named: "BossIdle")
+        let idleAtlas = SKTextureAtlas(named: stageInfo?.enemy.folderName ?? "")
         stageInfo?.enemy.idleAnimations.forEach {
             let textureName = $0
             let texture = idleAtlas.textureNamed(textureName)
             idleFrames.append(texture)
         }
         
-        let idleAnimation = SKAction.animate(with: idleFrames, timePerFrame: 0.15, resize: false, restore: true)
+        let idleAnimation = SKAction.animate(with: idleFrames, timePerFrame: 0.2, resize: false, restore: true)
         let repeatIdle = SKAction.repeatForever(idleAnimation)
 //        let flashAnimation = SKAction.repeatForever(createBossFlashAction())
-        bossSprite.run(repeatIdle, withKey: "bossIdle")
+        bossSprite.run(repeatIdle, withKey: stageInfo?.enemy.folderName ?? "")
 //        bossSprite.run(flashAnimation, withKey: "hit")
 
     }
@@ -403,14 +426,24 @@ class NewGameScene: SKScene {
         addChild(comboInfoLabel)
         
         statusLabel.text = ""
-        statusLabel.fontSize = 100
+        statusLabel.fontSize = 50
         statusLabel.fontColor = .green
-        statusLabel.position = CGPoint(x: frame.midX, y: frame.midY)
+        statusLabel.position = CGPoint(x: frame.midX, y: frame.midY - 100)
         statusLabel.zPosition = 20
         statusLabel.setScale(0)
 
         addChild(statusLabel)
         statusLabel.isHidden = true
+        
+        enemyStatusLabel.text = ""
+        enemyStatusLabel.fontSize = 50
+        enemyStatusLabel.fontColor = .red
+        enemyStatusLabel.position = CGPoint(x: frame.midX, y: frame.midY + 100)
+        enemyStatusLabel.zPosition = 20
+        enemyStatusLabel.setScale(0)
+
+        addChild(enemyStatusLabel)
+        enemyStatusLabel.isHidden = true
        
     }
 
@@ -741,8 +774,13 @@ class NewGameScene: SKScene {
 	
     private func handleAttack() {
         guard !selectedCards.isEmpty else { return }
-
+      
         let (name, mult, comboCards) = evaluateCombo(for: selectedCards,addChainEffect: true)
+        // remove enemy chain effect if chain effect is the same
+        if playerChainEffects.contains(where: { $0.type == enemyChainEffect?.type }) {
+            enemyChainEffect = nil
+            updateEnemyChainEffect()
+        }
         playedCards = comboCards
         let base = comboCards.reduce(0) { $0 + $1.attackValue }
         
@@ -885,6 +923,80 @@ class NewGameScene: SKScene {
         }
         updatePlayerChainEffects()
         
+        
+        // enemy Chain Effect Calculation
+        // check if miss
+        if enemyChainEffect?.type == .mist{
+            switch enemyChainEffect!.level {
+            case .base: do {
+                let randomNumber = Int.random(in: 1...20)
+                switch randomNumber {
+                case 1...20: do {
+                    enemyStatusLabel.isHidden = false
+                    enemyStatusLabel.text = "MISS!"
+                    enemyStatusLabel.run(.sequence([.unhide(), .scale(to: 1.2, duration: 0.5), .scale(to: 0.9, duration: 0.2), .scale(to: 1.0, duration: 0.2),.hide()]))
+                    currentAttackDamage = 0
+                }
+                default:
+                    break
+                }
+            }
+            case .strong: do {
+                let randomNumber = Int.random(in: 1...40)
+                switch randomNumber {
+                case 1...40: do {
+                    enemyStatusLabel.isHidden = false
+                    enemyStatusLabel.text = "MISS!"
+                    enemyStatusLabel.run(.sequence([.unhide(), .scale(to: 1.2, duration: 0.5), .scale(to: 0.9, duration: 0.2), .scale(to: 1.0, duration: 0.2),.hide()]))
+                    currentAttackDamage = 0
+                }
+                default:
+                    break
+                }
+            }
+            case .enemy: do {
+                let randomNumber = Int.random(in: 1...20)
+                switch randomNumber {
+                case 1...20: do {
+                    enemyStatusLabel.isHidden = false
+                    enemyStatusLabel.text = "MISS!"
+                    enemyStatusLabel.run(.sequence([.unhide(), .scale(to: 1.2, duration: 0.5), .scale(to: 0.9, duration: 0.2), .scale(to: 1.0, duration: 0.2),.hide()]))
+                    currentAttackDamage = 0
+                }
+                default:
+                    break
+                }
+            }
+            }
+        }
+        
+        // check if damage reduction
+        if enemyChainEffect?.type == .damageReduction{
+            switch enemyChainEffect!.level {
+            case .base: do {
+                currentAttackDamage = Int(Double(currentAttackDamage) * 0.8)
+                enemyStatusLabel.isHidden = false
+                enemyStatusLabel.text = "DAMAGE REDUCTION!"
+                enemyStatusLabel.run(.sequence([.unhide(), .scale(to: 1.2, duration: 0.5), .scale(to: 0.9, duration: 0.2), .scale(to: 1.0, duration: 0.2),.hide()]))
+            }
+            case .strong: do {
+                currentAttackDamage = Int(Double(currentAttackDamage) * 0.5)
+                enemyStatusLabel.isHidden = false
+                enemyStatusLabel.text = "DAMAGE REDUCTION!"
+                enemyStatusLabel.run(.sequence([.unhide(), .scale(to: 1.2, duration: 0.5), .scale(to: 0.9, duration: 0.2), .scale(to: 1.0, duration: 0.2),.hide()]))
+
+            }
+            case .enemy: do {
+                currentAttackDamage = Int(Double(currentAttackDamage) * 0.8)
+                enemyStatusLabel.isHidden = false
+                enemyStatusLabel.text = "DAMAGE REDUCTION!"
+                enemyStatusLabel.run(.sequence([.unhide(), .scale(to: 1.2, duration: 0.5), .scale(to: 0.9, duration: 0.2), .scale(to: 1.0, duration: 0.2),.hide()]))
+
+            }
+            }
+        }
+
+        
         guard bossHealth > 0 else { return }
         
         let delay = SKAction.wait(forDuration: 1.0)
@@ -991,9 +1103,9 @@ class NewGameScene: SKScene {
 
     private func bossDefeated() {
         // Stop idle animation
-        bossSprite.removeAction(forKey: "bossIdle")
+        bossSprite.removeAction(forKey: stageInfo?.enemy.folderName ?? "")
         
-        bossSprite.texture = SKTexture(imageNamed: "boss-lose")
+        bossSprite.texture = SKTexture(imageNamed:stageInfo?.enemy.loseImage ?? "")
         
         // 2. Create fade-out animation
         let fadeOut = SKAction.fadeOut(withDuration: 2.0) // 2-second fade
@@ -1379,11 +1491,27 @@ class NewGameScene: SKScene {
     }
     
     // Enemy Attack
-    private func enemyAttack() {
+    private func enemyAttack() -> Bool {
+        if turnsWithoutChainEffect >= 2 && enemyChainEffect == nil {
+            enemyStatusLabel.isHidden = false
+            enemyStatusLabel.text = "CHAIN EFFECT CREATED"
+            enemyStatusLabel.run(.sequence([.unhide(), .scale(to: 1.2, duration: 0.5), .scale(to: 0.9, duration: 0.2), .scale(to: 1.0, duration: 0.2),.hide()]))
+            enemyChainEffect = ChainEffectModel(type: ChainEffectType.allCases.randomElement() ?? .burn, remainingTurn: 1, level: .enemy)
+            updateEnemyChainEffect()
+            return false
+        }
+        
+        if enemyChainEffect != nil {
+            turnsWithoutChainEffect = 0
+        } else {
+            turnsWithoutChainEffect += 1
+        }
+        
         let attackValue = Int.random(in: 20...40)
         var damage : Double = Double(playerMaxHp) * Double(attackValue) / 100
         print("ATTACK VALUE : \(attackValue)")
         print("DAMAGE VALUE : \(damage)")
+        // player chain effect
         // Check if Dodge
         if let mistChainEffect = playerChainEffects.first(where: { $0.type == .mist }) {
             switch mistChainEffect.level {
@@ -1392,6 +1520,7 @@ class NewGameScene: SKScene {
                 let randomNumber = Int.random(in: 1...100)
                 switch randomNumber {
                 case 1...20: do {
+                    statusLabel.isHidden = false
                     statusLabel.text = "MISS!"
                     statusLabel.run(.sequence([.unhide(), .scale(to: 1.2, duration: 0.5), .scale(to: 0.9, duration: 0.2), .scale(to: 1.0, duration: 0.2),.hide()]))
                     damage = 0
@@ -1404,6 +1533,7 @@ class NewGameScene: SKScene {
                 let randomNumber = Int.random(in: 1...100)
                 switch randomNumber {
                 case 1...40: do {
+                    statusLabel.isHidden = false
                     statusLabel.text = "MISS!"
                     statusLabel.run(.sequence([.unhide(), .scale(to: 1.2, duration: 0.5), .scale(to: 0.9, duration: 0.2), .scale(to: 1.0, duration: 0.2),.hide()]))
                     damage = 0
@@ -1416,6 +1546,7 @@ class NewGameScene: SKScene {
                 let randomNumber = Int.random(in: 1...100)
                 switch randomNumber {
                 case 1...20: do {
+                    statusLabel.isHidden = false
                     statusLabel.text = "MISS!"
                     statusLabel.run(.sequence([.unhide(), .scale(to: 1.2, duration: 0.5), .scale(to: 0.9, duration: 0.2), .scale(to: 1.0, duration: 0.2),.hide()]))
                     damage = 0
@@ -1426,7 +1557,7 @@ class NewGameScene: SKScene {
             }
             }
         }
-        
+    
         // Check if damage reduction
         if let mistChainEffect = playerChainEffects.first(where: { $0.type == .damageReduction }) {
             switch mistChainEffect.level {
@@ -1442,9 +1573,109 @@ class NewGameScene: SKScene {
                 damage *= 0.8
             }
             }
+            statusLabel.isHidden = false
+            statusLabel.text = "DAMAGE REDUCTION!"
+            statusLabel.run(.sequence([.unhide(), .scale(to: 1.2, duration: 0.5), .scale(to: 0.9, duration: 0.2), .scale(to: 1.0, duration: 0.2),.hide()]))
+        }
+        
+        // enemy chain effect
+        // Check if explosion
+        if enemyChainEffect?.type == .explosion{
+            switch enemyChainEffect!.level {
+                
+            case .base: do {
+                damage *= 1.2
+            }
+            case .strong: do {
+                damage *= 1.4
+            }
+            case .enemy: do {
+                damage *= 1.2
+
+            }
+            }
+            enemyStatusLabel.isHidden = false
+            enemyStatusLabel.text = "EXPLOSION!"
+            enemyStatusLabel.run(.sequence([.unhide(), .scale(to: 1.2, duration: 0.5), .scale(to: 0.9, duration: 0.2), .scale(to: 1.0, duration: 0.2),.hide()]))
+            
+        }
+        
+        // Check if critical
+        if enemyChainEffect?.type == .critical{
+            switch enemyChainEffect!.level {
+                
+                
+            case .base: do {
+                let randomNumber = Int.random(in: 1...20)
+                switch randomNumber {
+                case 1...20: do {
+                    enemyStatusLabel.isHidden = false
+                    enemyStatusLabel.text = "CRITICAL!"
+                    enemyStatusLabel.run(.sequence([.unhide(), .scale(to: 1.2, duration: 0.5), .scale(to: 0.9, duration: 0.2), .scale(to: 1.0, duration: 0.2),.hide()]))
+                    damage *= 2
+                }
+                default:
+                    break
+                }
+            }
+            case .strong: do {
+                let randomNumber = Int.random(in: 1...40)
+                switch randomNumber {
+                case 1...40: do {
+                    enemyStatusLabel.isHidden = false
+                    enemyStatusLabel.text = "CRITICAL!"
+                    enemyStatusLabel.run(.sequence([.unhide(), .scale(to: 1.2, duration: 0.5), .scale(to: 0.9, duration: 0.2), .scale(to: 1.0, duration: 0.2),.hide()]))
+                    damage *= 2
+                }
+                default:
+                    break
+                }
+            }
+            case .enemy: do {
+                let randomNumber = Int.random(in: 1...20)
+                switch randomNumber {
+                case 1...20: do {
+                    enemyStatusLabel.isHidden = false
+                    enemyStatusLabel.text = "CRITICAL!"
+                    enemyStatusLabel.run(.sequence([.unhide(), .scale(to: 1.2, duration: 0.5), .scale(to: 0.9, duration: 0.2), .scale(to: 1.0, duration: 0.2),.hide()]))
+                    damage *= 2
+                }
+                default:
+                    break
+                }
+            }
+            }
+        }
+        
+        // Check if regen
+        if enemyChainEffect?.type == .regeneration{
+            switch enemyChainEffect!.level {
+                
+            case .base: do {
+                let regen = Double(bossMaxHealth) * 0.1
+                bossHealth += Int(regen)
+            }
+            case .strong: do {
+                let regen = Double(bossMaxHealth) * 0.2
+                bossHealth += Int(regen)
+            }
+            case .enemy: do {
+                let regen = Double(bossMaxHealth) * 0.1
+                bossHealth += Int(regen)
+            }
+            }
+            enemyStatusLabel.isHidden = false
+            enemyStatusLabel.text = "REGENERATION!"
+            enemyStatusLabel.run(.sequence([.unhide(), .scale(to: 1.2, duration: 0.5), .scale(to: 0.9, duration: 0.2), .scale(to: 1.0, duration: 0.2),.hide()]))
+            updateBossHealthBar()
         }
         
         playerHp = playerHp - Int(damage)
+        if damage > 0 {
+            return true
+        } else {
+            return false
+        }
     }
     
     // MARK: – Animate Hand Transition after Attack
@@ -1539,13 +1770,16 @@ class NewGameScene: SKScene {
                 if(self.bossHealth <= 0) {
                     return
                 }
-                self.shakeBackground(duration: shakeDur)
-                enemyAttack()
-                self.playerHpLabel.text = "\(self.playerHp)/\(self.playerMaxHp)"
-                run(enemyAttackSound)
-                if self.playerHp <= 0 && self.bossHealth > 0 {
-                    showGameOver()
+                if enemyAttack() {
+                    self.shakeBackground(duration: shakeDur)
+                    self.playerHpLabel.text = "\(self.playerHp)/\(self.playerMaxHp)"
+                    run(enemyAttackSound)
+                    if self.playerHp <= 0 && self.bossHealth > 0 {
+                        showGameOver()
+                    }
                 }
+                
+             
 
             },
             .wait(forDuration: shakeDur + buffer),
@@ -1579,6 +1813,36 @@ class NewGameScene: SKScene {
                 self.isAnimating = false
                 updatePlayerChainEffectsCountdown()
                 updatePlayerChainEffects()
+
+            },
+            
+            // 5) check if player is burned
+            .run { [weak self] in
+                guard let self = self else { return }
+                if enemyChainEffect?.type == .burn && bossHealth > 0 && playerHp > 0 {
+                    switch enemyChainEffect!.level {
+                        
+                    case .base: do {
+                        let burnDamage : Double = Double(playerMaxHp) * 0.1
+                        self.playerHp -= Int(burnDamage)
+                        self.playerHpLabel.text = "\(self.playerHp)/\(self.playerMaxHp)"
+                    }
+                    case .strong: do {
+                        let burnDamage : Double = Double(playerMaxHp) * 0.2
+                        self.playerHp -= Int(burnDamage)
+                        self.playerHpLabel.text = "\(self.playerHp)/\(self.playerMaxHp)"
+                    }
+                    case .enemy: do {
+                        let burnDamage : Double = Double(playerMaxHp) * 0.1
+                        self.playerHp -= Int(burnDamage)
+                        self.playerHpLabel.text = "\(self.playerHp)/\(self.playerMaxHp)"
+                    }
+                    }
+                    
+                    enemyStatusLabel.isHidden = false
+                    enemyStatusLabel.text = "BURN!"
+                    enemyStatusLabel.run(.sequence([.unhide(), .scale(to: 1.2, duration: 0.2), .scale(to: 0.9, duration: 0.2), .scale(to: 1.0, duration: 0.2),.hide()]))
+                }
 
             }
         ]))

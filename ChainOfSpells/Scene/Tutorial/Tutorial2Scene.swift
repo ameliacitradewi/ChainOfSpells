@@ -29,7 +29,7 @@ class Tutorial2Scene: SKScene {
         CardModel(element: Element.fire, value: 10),
     ]
 
-    var enemy1 = EnemyModel( name: "enemy_1", idleAnimations:  ["boss1","boss2","boss3","boss4","boss5","boss6","boss7"], hp: 10,initialChainEffect: nil)
+    var enemy1 = EnemyModel( name: "enemy_1", folderName: "BossIdle", idleAnimations:  ["boss1","boss2","boss3","boss4","boss5","boss6","boss7"], hp: 10,initialChainEffect: nil, loseImage: "boss-lose")
     
     // Tutorial Steps
     enum TutorialStep {

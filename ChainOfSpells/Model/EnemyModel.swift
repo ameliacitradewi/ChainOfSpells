@@ -7,7 +7,9 @@
 
 struct EnemyModel {
     let name : String
+    let folderName : String
     let idleAnimations : [String]
     let hp : Int
     let initialChainEffect : ChainEffectModel?
+    let loseImage : String
 }
