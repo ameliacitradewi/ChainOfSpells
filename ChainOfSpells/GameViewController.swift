@@ -17,7 +17,7 @@ class GameViewController: UIViewController {
 		// Pastikan view bisa dikonversi ke SKView
 		if let view = self.view as? SKView {
 			// Buat scene menggunakan ukuran view
-            let scene = FirstTutorialScene(size: view.bounds.size)
+            let scene = MainMenu(size: view.bounds.size)
 			scene.scaleMode = .aspectFill
     
 			

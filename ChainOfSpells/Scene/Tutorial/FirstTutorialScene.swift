@@ -803,6 +803,8 @@ class FirstTutorialScene: SKScene {
             }
         }
         case .nextLevel: do {
+            UserDefaults.standard.playerModel.elements = [.fire]
+            UserDefaults.standard.playerModel.currentStage = 1
             let gameScene = UnlockElementScene(size: self.view!.bounds.size)
             gameScene.scaleMode = .aspectFill
             // Tampilkan scene
@@ -1506,7 +1508,7 @@ class FirstTutorialScene: SKScene {
 
         addChild(victoryLabel)
         victoryLabel.run(.sequence([.unhide(), .scale(to: 1.2, duration: 0.5), .scale(to: 0.9, duration: 0.2), .scale(to: 1.0, duration: 0.2)]))
-        isUserInteractionEnabled = false
+//        isUserInteractionEnabled = false
         // Delay the call to gotoNextLevel by 3 seconds
            run(SKAction.sequence([
                SKAction.wait(forDuration: 3.0),

@@ -57,7 +57,7 @@ class MainMenu: SKScene {
 		let touchedNode = atPoint(location)
 
 		if touchedNode.name == "play" {
-			let nextScene = SelectElementScene(size: self.size)
+            let nextScene = FirstTutorialScene(size: self.size)
 			nextScene.scaleMode = .aspectFill
 			self.view?.presentScene(nextScene, transition: .fade(withDuration: 0.5))
 		}
