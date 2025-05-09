@@ -1866,19 +1866,20 @@ class NewGameScene: SKScene {
         addChild(dimBackground)
 
         // Popup window
-        let window = SKSpriteNode(color: .white, size: CGSize(width: 300, height: 200))
+        let window = SKSpriteNode(imageNamed: "combo-bg")
         window.name = "restartWindow"
         window.zPosition = 101
+        window.size = CGSize(width: 200, height: 150)
         window.position = CGPoint(x: self.size.width / 2, y: self.size.height / 2)
         addChild(window)
 
         // Restart button
-        let restartButton = SKLabelNode(text: "Restart")
+        let restartButton = SKLabelNode(fontNamed: fontName)
         restartButton.name = "restartButton"
-        restartButton.fontName = "AvenirNext-Bold"
+        restartButton.text = "Restart"
         restartButton.fontSize = 24
-        restartButton.fontColor = .blue
-        restartButton.position = CGPoint(x: 0, y: -50)
+        restartButton.fontColor = .white
+        restartButton.position = CGPoint(x: 0, y: -10)
         restartButton.zPosition = 102
         window.addChild(restartButton)
     }
