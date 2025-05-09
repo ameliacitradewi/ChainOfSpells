@@ -7,126 +7,111 @@
 
 import SpriteKit
 
+class UnlockElementScene: SKScene {
+	private var selectedElement: Element!
 
+	private let fireCard = SKSpriteNode(imageNamed: Element.fire.cardAsset)
+	private let waterCard = SKSpriteNode(imageNamed: Element.water.cardAsset)
+	private let windCard = SKSpriteNode(imageNamed: Element.wind.cardAsset)
+	private let earthCard = SKSpriteNode(imageNamed: Element.earth.cardAsset)
 
-class UnlockElementScene : SKScene {
-    // User selected element
-    private var selectedElement : Element!
-    
-    // Element cards selection
-    private let fireCard = SKSpriteNode(imageNamed: Element.fire.cardAsset)
-    private let waterCard = SKSpriteNode(imageNamed:  Element.water.cardAsset)
-    private let windCard = SKSpriteNode(imageNamed:  Element.wind.cardAsset)
-    private let earthCard = SKSpriteNode(imageNamed:  Element.earth.cardAsset)
-    
-    
-    
-    // UI
-//    private let selectButton = SKSpriteNode(imageNamed: "attack_button")
-//    private var selectionHighlight : SKShapeNode!
+	private let bookBackground = SKSpriteNode(imageNamed: "book_background.png")
+	private let environmentBackground = SKSpriteNode(imageNamed: "environtment-bg.png")
 
+	override func didMove(to view: SKView) {
+		environmentBackground.position = CGPoint(x: frame.midX, y: frame.midY)
+		environmentBackground.zPosition = -10
+		environmentBackground.size = frame.size
+		addChild(environmentBackground)
 
-    override func didMove(to view: SKView) {
-        self.backgroundColor = UIColor(named: "CardGlow") ?? .red
-        setupCards()
-        setupButtons()
-    }
-    
-    // MARK: - Buttons Setup
-    private func setupButtons() {
-//        selectButton.scale(to: frame.size, width: false, multiplier: 0.1)
-//        selectButton.name = "select"
-//        selectButton.position = CGPoint(x: self.frame.midX, y: self.frame.midY - 160)
-    
-    }
-    
-    
-    // MARK: - Cards Setup
-    private func setupCards() {
-        fireCard.scale(to: frame.size, width: false, multiplier: 0.4)
-        fireCard.position = CGPoint(x: self.frame.midX - 100, y: self.frame.midY + 100)
-        self.addChild(fireCard)
-        
-        waterCard.scale(to: frame.size, width: false, multiplier: 0.4)
-        waterCard.position = CGPoint(x: self.frame.midX + 100, y: self.frame.midY + 100)
-        self.addChild(waterCard)
-        
-        windCard.scale(to: frame.size, width: false, multiplier: 0.4)
-        windCard.position = CGPoint(x: self.frame.midX - 100, y: self.frame.midY - 60)
-        self.addChild(windCard)
-        
-        earthCard.scale(to: frame.size, width: false, multiplier: 0.4)
-        earthCard.position = CGPoint(x: self.frame.midX + 100, y: self.frame.midY - 60)
-        self.addChild(earthCard)
-        let targetSize = CGSize(width: fireCard.frame.width + 30,
-                                height: fireCard.frame.height + 40)
-//        selectionHighlight =  SKShapeNode(rectOf: targetSize, cornerRadius: 0)
- 
-    }
-    
-    // MARK: - Touch Handling
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard let touch = touches.first else { return }
-        let location = touch.location(in: self)
-        let currentElements = UserDefaults.standard.playerModel.elements
-        if fireCard.contains(location){
-            if(currentElements.contains(.fire)){
-                return
-            }
-            selectedElement = .fire
-        } else if waterCard.contains(location){
-            if(currentElements.contains(.water)){
-                return
-            }
-            selectedElement = .water
-        } else if windCard.contains(location){
-            if(currentElements.contains(.wind)){
-                return
-            }
-            selectedElement = .wind
-        } else if earthCard.contains(location){
-            if(currentElements.contains(.earth)){
-                return
-            }
-            selectedElement = .earth
-        } else {
-            return
-        }
-//        else if selectButton.contains(location){
-//            let gameScene = NewGameScene(size: self.view!.bounds.size)
-//            gameScene.scaleMode = .aspectFill
-//            UserDefaults.standard.playerModel.elements = [selectedElement]
-//            // Tampilkan scene
-//            self.view!.presentScene(gameScene)
-//        }
-//
-//        if selectedElement == nil{
-//            return
-//        }
-        
-        // Set game scene info
-        let gameScene = NewGameScene(size: self.view!.bounds.size)
-        gameScene.stageInfo = stages[UserDefaults.standard.playerModel.currentStage]
-        gameScene.scaleMode = .aspectFill
-        UserDefaults.standard.playerModel.elements.append(selectedElement)
-        // Tampilkan scene
-        self.view!.presentScene(gameScene,transition: SKTransition.fade(withDuration: 0.5))
-        
-  
+		let instructionLabel = SKLabelNode(text: "Unlock New Element:")
+		instructionLabel.fontName = "AlmendraSC-Regular"
+		instructionLabel.fontSize = 20
+		instructionLabel.fontColor = .white
+		instructionLabel.position = CGPoint(x: frame.midX, y: frame.maxY - 65)
+		instructionLabel.zPosition = 10
+		instructionLabel.horizontalAlignmentMode = .center
+		addChild(instructionLabel)
 
-//        if !selectedCards.isEmpty {
-//            if attackButton.contains(location) { handleAttack(); return }
-//            if discardButton.contains(location) {
-//                // only allow if still have discards left
-//                guard discardLeft > 0 else { return }
-//                handleDiscard(); return
-//            }
-//        }
-//        for card in playAreaCards where card.contains(location) && !card.isAnimating && !isAnimating {
-//            handleCardSelection(card); return
-//        }
-//        if !isAnimating && deckNode.contains(location) {
-//            drawCardsFromDeck()
-//        }
-    }
+		setupBackground()
+		setupCards()
+	}
+
+	private func setupBackground() {
+		bookBackground.position = CGPoint(x: frame.midX, y: frame.midY - 45)
+		bookBackground.zPosition = -1
+		bookBackground.scale(to: frame.size, width: true, multiplier: 0.80)
+		addChild(bookBackground)
+	}
+
+	private func setupCards() {
+		let positions: [CGPoint] = [
+			CGPoint(x: self.frame.midX - 70, y: self.frame.midY + 15),
+			CGPoint(x: self.frame.midX + 70, y: self.frame.midY + 15),
+			CGPoint(x: self.frame.midX - 70, y: self.frame.midY - 100),
+			CGPoint(x: self.frame.midX + 70, y: self.frame.midY - 100)
+		]
+
+		let cards = [fireCard, waterCard, windCard, earthCard]
+		let currentElements = UserDefaults.standard.playerModel.elements
+
+		for (i, card) in cards.enumerated() {
+			card.scale(to: bookBackground.size, width: false, multiplier: 0.25)
+			card.position = positions[i]
+			card.zPosition = 1
+
+			if currentElements.contains(Element.allCases[i]) {
+				card.alpha = 0.3 // show as disabled
+				card.isUserInteractionEnabled = false
+			} else {
+				applyFloatingEffect(to: card)
+				addShadow(to: card)
+			}
+
+			addChild(card)
+		}
+	}
+
+	private func applyFloatingEffect(to node: SKNode, distance: CGFloat = 10, duration: TimeInterval = 1.2) {
+		let moveUp = SKAction.moveBy(x: 0, y: distance, duration: duration)
+		let moveDown = SKAction.moveBy(x: 0, y: -distance, duration: duration)
+		let floatSequence = SKAction.sequence([moveUp, moveDown])
+		node.run(SKAction.repeatForever(floatSequence))
+	}
+
+	private func addShadow(to card: SKSpriteNode) {
+		let shadow = SKSpriteNode(imageNamed: "shadow_blur")
+		shadow.size = CGSize(width: card.size.width * 1.5, height: card.size.height * 0.50)
+		shadow.position = CGPoint(x: card.position.x, y: card.position.y - card.size.height / 2.5)
+		shadow.zPosition = card.zPosition - 1
+
+		addChild(shadow)
+
+		let fadeIn = SKAction.fadeAlpha(to: 0.4, duration: 1.2)
+		let fadeOut = SKAction.fadeAlpha(to: 0.2, duration: 1.2)
+		shadow.run(.repeatForever(.sequence([fadeIn, fadeOut])))
+	}
+
+	override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+		guard let location = touches.first?.location(in: self) else { return }
+		let currentElements = UserDefaults.standard.playerModel.elements
+
+		if fireCard.contains(location), !currentElements.contains(.fire) {
+			selectedElement = .fire
+		} else if waterCard.contains(location), !currentElements.contains(.water) {
+			selectedElement = .water
+		} else if windCard.contains(location), !currentElements.contains(.wind) {
+			selectedElement = .wind
+		} else if earthCard.contains(location), !currentElements.contains(.earth) {
+			selectedElement = .earth
+		} else {
+			return
+		}
+
+		let gameScene = NewGameScene(size: self.view!.bounds.size)
+		gameScene.stageInfo = stages[UserDefaults.standard.playerModel.currentStage]
+		gameScene.scaleMode = .aspectFill
+		UserDefaults.standard.playerModel.elements.append(selectedElement)
+		self.view!.presentScene(gameScene, transition: .fade(withDuration: 0.5))
+	}
 }

@@ -402,8 +402,8 @@ class NewGameScene: SKScene {
         momentumLabel.text = "\(momentum)"
 		momentumLabel.fontSize = 18
 		momentumLabel.fontColor = .white
-		momentumLabel.horizontalAlignmentMode = .center
-        momentumLabel.position = CGPoint(x: momentumBar.position.x + 35, y: momentumBar.position.y - 4)
+		momentumLabel.horizontalAlignmentMode = .left
+        momentumLabel.position = CGPoint(x: momentumBar.position.x + 20, y: momentumBar.position.y - 4)
         
         // Momentum multi label
         momentumMultiplierLabel.text = ""
