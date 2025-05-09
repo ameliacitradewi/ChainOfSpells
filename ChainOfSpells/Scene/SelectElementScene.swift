@@ -41,7 +41,7 @@ class SelectElementScene : SKScene {
 
 		
 		// Tambahkan label instruksi di atas
-		let instructionLabel = SKLabelNode(text: "Unlocked Your First Element:")
+		let instructionLabel = SKLabelNode(text: "Unlock Your First Element:")
 		instructionLabel.fontName = "AlmendraSC-Regular"
 		instructionLabel.fontSize = 20
 		instructionLabel.fontColor = .white

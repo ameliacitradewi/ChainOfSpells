@@ -46,12 +46,12 @@ class SpellsBook: SKNode {
 
 		// Data Combo
 		let comboData1: [(SKSpriteNode, SKSpriteNode, SKSpriteNode, String)] = [
-			(fireCard.copy() as! SKSpriteNode, windCard.copy() as! SKSpriteNode, chainBurn, "Extra 5% Damage (2 Turns)"),
-			(fireCard.copy() as! SKSpriteNode, earthCard.copy() as! SKSpriteNode, chainExplosion, "Attack Damage ×2"),
-			(fireCard.copy() as! SKSpriteNode, waterCard.copy() as! SKSpriteNode, chainMist, "Enemy Miss Chance +20%"),
+			(fireCard.copy() as! SKSpriteNode, windCard.copy() as! SKSpriteNode, chainBurn, "Deals 10% of enemy damage every turn (2 Turns)"),
+			(fireCard.copy() as! SKSpriteNode, earthCard.copy() as! SKSpriteNode, chainExplosion, "Deals 1.2 times the total damage"),
+			(fireCard.copy() as! SKSpriteNode, waterCard.copy() as! SKSpriteNode, chainMist, "Enemy has 20% chance to miss (2 Turns)"),
 			(waterCard.copy() as! SKSpriteNode, earthCard.copy() as! SKSpriteNode, chainRegerenation, "Restore 10% HP"),
-			(waterCard.copy() as! SKSpriteNode, windCard.copy() as! SKSpriteNode, chainCritical, "20% Critical Hit"),
-			(windCard.copy() as! SKSpriteNode, fireCard.copy() as! SKSpriteNode, chainDamageReduction, "50% Damage Reduction")
+			(waterCard.copy() as! SKSpriteNode, windCard.copy() as! SKSpriteNode, chainCritical, "Damage has 20% chance to become Critical (2 Turns)"),
+            (windCard.copy() as! SKSpriteNode, earthCard.copy() as! SKSpriteNode, chainDamageReduction, "Enemy deals 20% less damage (2 Turns)")
 		]
 
 		let comboData2: [Any] = [
