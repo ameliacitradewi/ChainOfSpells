@@ -66,6 +66,8 @@ class NewGameScene: SKScene {
 
     private let playerHpLabel = SKLabelNode(fontNamed: fontName)
     private var discardLeft = 3
+    private var maxDiscardCount = 3
+
     private let discardLeftLabel = SKLabelNode(fontNamed: fontName)
     private let comboBackground = SKSpriteNode(imageNamed: "combo-bg")
     private let comboInfoLabel = SKLabelNode(fontNamed: fontName)
@@ -1822,7 +1824,8 @@ class NewGameScene: SKScene {
                 self.isAnimating = false
                 updatePlayerChainEffectsCountdown()
                 updatePlayerChainEffects()
-
+                self.discardLeft = self.maxDiscardCount
+                self.discardLeftLabel.text = "x\(self.discardLeft)"
             },
             
             // 5) check if player is burned
