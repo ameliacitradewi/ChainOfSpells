@@ -25,8 +25,8 @@ class NewGameScene: SKScene {
     private let deckCountLabel = SKLabelNode(fontNamed: fontName)
 
     // MARK: Buttons & Selection
-    private let attackButton = SKSpriteNode(imageNamed: "btn-attack")
-    private let discardButton = SKSpriteNode(imageNamed: "btn-discard")
+    private let attackButton = SKSpriteNode(imageNamed: "btns-attack")
+    private let discardButton = SKSpriteNode(imageNamed: "btns-discard")
     private var playAreaCards = [CardNode]()
     private var selectedCards = [CardNode]()
     private var playedCards = [CardNode]()
@@ -62,8 +62,6 @@ class NewGameScene: SKScene {
 
     // MARK: Labels & State
     private let victoryLabel = SKLabelNode(fontNamed: fontName)
-   
-
     private let playerHpLabel = SKLabelNode(fontNamed: fontName)
     private var discardLeft = 3
     private var maxDiscardCount = 3
@@ -83,12 +81,17 @@ class NewGameScene: SKScene {
     
     // UI
     private var background = SKSpriteNode(imageNamed: "")
-    private let playerHpNode = SKSpriteNode(imageNamed: "player-hp")
-    private let playerDiscard = SKSpriteNode(imageNamed: "discard-card")
+	private let levelBanner = SKSpriteNode(imageNamed: "level-banner")
+	
+    private let playerHpNode = SKSpriteNode(imageNamed: "mage-hp-bar-frame") // mage hp bar
+	private let playerHpFill = SKSpriteNode(imageNamed: "mage-hp-bar-fill")
+	private let playerCircleNode = SKSpriteNode(imageNamed: "mage-profile") // Circle profile mage
+	
+    private let playerDiscard = SKSpriteNode(imageNamed: "discard-card") // button discard
     private let statusLabel = SKLabelNode(fontNamed: fontName)
     private let enemyStatusLabel = SKLabelNode(fontNamed: fontName)
 
-    private let momentumBar = SKSpriteNode(imageNamed: "momentum")
+    private let momentumBar = SKSpriteNode(imageNamed: "momentum-bar")
 
     // Chain Effect
     private var playerChainEffects : [ChainEffectModel] = []
@@ -124,7 +127,7 @@ class NewGameScene: SKScene {
             // Initialize from that path
             let url = URL(fileURLWithPath: path)
             backgroundMusicNode = SKAudioNode(url: url)
-            backgroundMusicNode?.autoplayLooped = true
+			backgroundMusicNode?.autoplayLooped = false // balikin jadi true
             addChild(backgroundMusicNode!)
         } else {
             print("⚠️ backgroundMusic.mp3 not found in bundle!")
@@ -170,7 +173,7 @@ class NewGameScene: SKScene {
     private func setupDeckNode() {
         deckNode = SKSpriteNode(texture: spellBookTexture)
         deckNode.position = CGPoint(x: frame.midX + 350, y: frame.midY - 115)
-        deckNode.scale(to: frame.size, width: false, multiplier: 0.3)
+        deckNode.scale(to: frame.size, width: false, multiplier: 0.2)
 //        scaleCard(deckNode)
         addChild(deckNode)
 
@@ -188,18 +191,18 @@ class NewGameScene: SKScene {
 
     // MARK: - Buttons Setup
     private func setupButtons() {
-        let buttonY: CGFloat = frame.midY - 30
+//        let buttonY: CGFloat = frame.midY - 30
         attackButton.name = "attack"
         discardButton.name = "discard"
 
         [attackButton, discardButton].forEach { button in
             button.zPosition = 10
-            button.scale(to: frame.size, width: false, multiplier: 0.09)
+//            button.scale(to: frame.size, width: false, multiplier: 0.09)
             button.isHidden = true
             addChild(button)
         }
-        attackButton.position = CGPoint(x: frame.midX - 40, y: buttonY)
-        discardButton.position = CGPoint(x: frame.midX + 40, y: buttonY)
+		attackButton.position = CGPoint(x: frame.midX + 280, y: frame.midY - 80)
+		discardButton.position = CGPoint(x: frame.midX + 350, y: frame.midY - 40 )
     }
 
     // MARK: - Button Visibility
@@ -363,8 +366,8 @@ class NewGameScene: SKScene {
 //        momentumLabel.horizontalAlignmentMode = .left
 //        momentumLabel.position = CGPoint(x: momentumBar.position.x + 35, y: frame.minY + 117)
         
-        momentumBar.position = CGPoint(x: 18, y: frame.minY + 120)
-        momentumBar.scale(to: frame.size, width: false, multiplier: 0.07)
+		momentumBar.position = CGPoint(x: playerCircleNode.position.x + 150, y: frame.maxY - 48)
+//        momentumBar.scale(to: frame.size, width: false, multiplier: 0.03)
         addChild(momentumLabel)
         addChild(momentumBar)
         
@@ -387,17 +390,32 @@ class NewGameScene: SKScene {
         addChild(playerDiscard)
         addChild(discardLeftLabel)
 
-        // HP Player Bar - bottom
-        playerHpLabel.text = "\(playerHp)/\(playerMaxHp)"
-        playerHpLabel.fontSize = 18
-        playerHpLabel.fontColor = .white
-        playerHpLabel.horizontalAlignmentMode = .left
-        playerHpLabel.position = CGPoint(x: playerHpNode.position.x + 35, y: frame.minY + 43)
-        
-        playerHpNode.position = CGPoint(x: 18, y: frame.minY + 50)
-        playerHpNode.scale(to: frame.size, width: false, multiplier: 0.06)
-        addChild(playerHpLabel)
-        addChild(playerHpNode)
+        // HP Player Bar - top-left
+		playerCircleNode.size = CGSize(width: 66, height: 66)
+		playerCircleNode.position = CGPoint(x: frame.minX + 50, y: frame.maxY - 50)
+		playerCircleNode.zPosition = 2
+		addChild(playerCircleNode) // circle profile for mage
+
+		playerHpNode.position = CGPoint(x: playerCircleNode.position.x + 93, y: frame.maxY - 30)
+		playerHpNode.scale(to: frame.size, width: false, multiplier: 0.05)
+		addChild(playerHpNode) // mage hp bar (frame)
+		
+		playerHpFill.position = CGPoint(x: playerHpNode.position.x, y: playerHpNode.position.y)
+		playerHpFill.scale(to: frame.size, width: false, multiplier: 0.05)
+		playerHpFill.zPosition = -1
+		addChild(playerHpFill)
+
+		playerHpLabel.text = "\(playerHp)/\(playerMaxHp)"
+		playerHpLabel.fontSize = 18
+		playerHpLabel.fontColor = .white
+		playerHpLabel.horizontalAlignmentMode = .center
+		playerHpLabel.position = CGPoint(x: playerHpNode.position.x, y: playerCircleNode.position.y + 14)
+		addChild(playerHpLabel) // mage hp bar label
+		
+		// Level Banner
+		levelBanner.size = CGSize(width: 120, height: 34)
+		levelBanner.position = CGPoint(x: frame.maxX - 100, y: frame.maxY - 30)
+		addChild(levelBanner)
 		
 		
 		// Momentum Bar
@@ -415,7 +433,7 @@ class NewGameScene: SKScene {
         momentumMultiplierLabel.zPosition = 10
         addChild(momentumMultiplierLabel)
         
-        comboBackground.position =  CGPoint(x: frame.midX, y: attackButton.position.y + 40)
+        comboBackground.position =  CGPoint(x: frame.midX, y: attackButton.position.y + 45)
         comboBackground.scale(to: frame.size, width: true, multiplier: 0.20)
         comboBackground.zPosition = -1
         addChild(comboBackground)
